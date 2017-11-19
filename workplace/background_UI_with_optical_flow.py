@@ -5,7 +5,7 @@ class BitwiseImage:
     def __init__(self, img):
         self.img = img
 
-    def setImage(self, frame, x, y):
+    def setImage(self, frame, y, x):
         rows,cols,channels = self.img.shape
 
         roi = frame[0:rows, 0:cols]
@@ -23,16 +23,15 @@ class BitwiseImage:
 
         # Put logo in ROI and modify the main image
         dst = cv2.add(img1_bg,img2_fg)
-        frame[x:rows+x, y:cols+y ] = dst
+        frame[y:rows+y, x:cols+x ] = dst
 
-def checkHandPosition(x, y):
+def checkHandPosition(y, x):
     global wearing
     if (x>34 and x<110) and (y>41 and y<111):
         wearing = BitwiseImage(cv2.imread('suit3.png'))
         print("hello")
     elif (x>355 and x<422) and (y>41 and y<111):
         print("haha")
-
 
 # ShiTomasi corner detection parameters
 feature_params = dict( maxCorners = 100,
@@ -89,7 +88,6 @@ if __name__ == '__main__':
 
         ###Background UI 삽입
         backgroundUI.setImage(realframe,0,0)
-
 
         wearing.setImage(realframe,0,0)
 
