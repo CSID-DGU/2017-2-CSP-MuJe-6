@@ -1,6 +1,0 @@
-# 2017-2-CSP-MuJe-6
-무제 (권윤환, 조유림, 최원준)
-
-OpenCV Tutorial:
----
-Offical OpenCV tutorials in Jupyter Notebook form
