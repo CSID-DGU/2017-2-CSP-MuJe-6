@@ -57,16 +57,18 @@ class detector:
 
     def detect_body2(self, frame):
 
-        pre_path = 'c:\\opencv\\library\\opencv-master\\opencv-master\\data\\haarcascades\\'
-
+        #pre_path = 'c:\\opencv\\library\\opencv-master\\opencv-master\\data\\haarcascades\\'
+        '''
         path_lowerbody = pre_path + 'haarcascade_lowerbody.xml'
         path_fullbody = pre_path + 'haarcascade_fullbody.xml'
         path_face = pre_path + 'haarcascade_frontalface_default.xml'
         path_upper = pre_path + 'haarcascade_upperbody.xml'
         path_eye = pre_path + 'haarcascade_eye.xml'
         path_hog = pre_path + 'hogcascade_pedestrians.xml'
+        '''
 
-        face_cascade = cv2.CascadeClassifier(path_upper)
+        path_face = 'haarcascade_frontalface_default.xml'
+        face_cascade = cv2.CascadeClassifier(path_face)
 
         gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
         found = face_cascade.detectMultiScale(gray, 1.3, 5)
