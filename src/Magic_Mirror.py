@@ -76,62 +76,68 @@ def main():
     body_detector = myUtills.detector()
     clothes_overlayer = myUtills.overlayer()
 
+    countframe = 0
+
     while(timer_over == True):
-        # 1. optical flow
-        ret, realframe = cap.read()
-        realframe = cv2.flip(realframe, 1)  # 좌우반전
+        countframe += 1
+        if (countframe > 100000):
+            countframe = 0
+        if (countframe % 5000 == 0):
+            # 1. optical flow
+            ret, realframe = cap.read()
+            realframe = cv2.flip(realframe, 1)  # 좌우반전
 
-        frame_gray = cv2.cvtColor(realframe, cv2.COLOR_BGR2GRAY)
+            frame_gray = cv2.cvtColor(realframe, cv2.COLOR_BGR2GRAY)
 
-        # calculate optical flow
-        p1, st, err = cv2.calcOpticalFlowPyrLK(old_gray, frame_gray, p0, None, **lk_params)
-        # Select good points
-        good_new = p1[st == 1]
-        good_old = p0[st == 1]
+            # calculate optical flow
+            p1, st, err = cv2.calcOpticalFlowPyrLK(old_gray, frame_gray, p0, None, **lk_params)
+            # Select good points
+            good_new = p1[st == 1]
+            good_old = p0[st == 1]
 
-        if (st.all() == 1):
+            if (st.all() == 1):
 
-            # draw the tracks
-            for i, (new, old) in enumerate(zip(good_new, good_old)):
-                a, b = new.ravel()  # 현재 프레임의 좌표값
-                c, d = old.ravel()  # 이전 프레임의 좌표값
-                # checkHandPosition(a,b)
-                mask = cv2.line(mask, (a, b), (c, d), color[i].tolist(), 2)  # 현재와 이전의 프레임을 이어줌
-                realframe = cv2.circle(realframe, (a, b), 5, color[i].tolist(), -1)
+                # draw the tracks
+                for i, (new, old) in enumerate(zip(good_new, good_old)):
+                    a, b = new.ravel()  # 현재 프레임의 좌표값
+                    c, d = old.ravel()  # 이전 프레임의 좌표값
+                    # checkHandPosition(a,b)
+                    mask = cv2.line(mask, (a, b), (c, d), color[i].tolist(), 2)  # 현재와 이전의 프레임을 이어줌
+                    realframe = cv2.circle(realframe, (a, b), 5, color[i].tolist(), -1)
 
-            # Now update the previous frame and previous points
-            old_gray = frame_gray.copy()
-            p0 = good_new.reshape(-1, 1, 2)
-
-
-        # 2.detect body
-        realframe = body_detector.detect_body2(realframe)
-        box_coordinate = body_detector.box_coordinate
-
-        # 3.overlay clothes
-        realframe = clothes_overlayer.overlay(realframe, box_coordinate)
+                # Now update the previous frame and previous points
+                old_gray = frame_gray.copy()
+                p0 = good_new.reshape(-1, 1, 2)
 
 
+            # 2.detect body
+            realframe = body_detector.detect_body2(realframe)
+            box_coordinate = body_detector.box_coordinate
+
+            # 3.overlay clothes
+            realframe = clothes_overlayer.overlay(realframe, box_coordinate)
 
 
-        #Background UI 삽입
-        backgroundUI.setImage(realframe, 0, 0)
-        # wearing.setImage(realframe, 0, 0)
 
-        if (st.all() == 1): # st == 1 이면 프레임 안
-            img = cv2.add(realframe, mask)
-        else: # 프레임 밖으로 벗어난 경우
-            img = realframe
 
-        cv2.imshow('frame', img)
+            #Background UI 삽입
+            backgroundUI.setImage(realframe, 0, 0)
+            # wearing.setImage(realframe, 0, 0)
 
-        # 카메라 종료
-        k = cv2.waitKey(30) & 0xff
-        if k == 27:  # esc key
-            cap.release()
-            break
+            if (st.all() == 1): # st == 1 이면 프레임 안
+                img = cv2.add(realframe, mask)
+            else: # 프레임 밖으로 벗어난 경우
+                img = realframe
 
-        # Detections
+            cv2.imshow('frame', img)
+
+            # 카메라 종료
+            k = cv2.waitKey(30) & 0xff
+            if k == 27:  # esc key
+                cap.release()
+                break
+
+            # Detections
 
     cap.release()
     cv2.destroyAllWindows()
