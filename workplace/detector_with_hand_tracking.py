@@ -9,13 +9,13 @@ color = np.random.randint(0, 255, (100, 3))  # 랜덤 색상
 
 # 파일명
 # cap = cv2.VideoCapture("C:\\cv\\Videos\\won_arms.mp4")
-cap = cv2.VideoCapture("s2.mp4")
+cap = cv2.VideoCapture("video_2.mp4")
 cap.set(cv2.CAP_PROP_FPS, 1)
 
 # 첫 프레임 잡아서 피쳐 좌표 찍어놓기
 ret, old_frame = cap.read()
 #########################
-old_frame = old_frame[0:720, 200:1000]
+#old_frame = old_frame[0:720, 200:1000]
 #########################
 
 old_gray = cv2.cvtColor(old_frame, cv2.COLOR_BGR2GRAY)
@@ -47,7 +47,7 @@ while (1):
 
     ####################################
     # frame 조정 720,1280
-    frame = frame[0:720, 200:1000]
+    #frame = frame[0:720, 200:1000]
 
     # 1.detect body
     frame_detected = body_detector.detect_body2(frame)

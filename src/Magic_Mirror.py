@@ -16,7 +16,10 @@ def checkHandPosition(y, x):
         print("우측 상단 원 클릭")
 
 def main():
-    cap = cv2.VideoCapture(0)
+
+
+    cap = cv2.VideoCapture('video_1.mp4')
+    #cap = cv2.VideoCapture(0)
 
     init_time = time.time()
 
@@ -28,6 +31,7 @@ def main():
 
     while (cap.isOpened()):
         ret, frame = cap.read()
+
         frame = cv2.flip(frame, 1)  # 좌우반전
 
         if ret == True:
@@ -47,29 +51,33 @@ def main():
         else:
             break
 
-        # Lucas Kanade optical flow parameters
-        lk_params = dict( winSize  = (15,15),
-                           maxLevel = 2,
-                           criteria = (cv2.TERM_CRITERIA_EPS | cv2.TERM_CRITERIA_COUNT, 10, 0.03))
-        # Random colors
-        color = np.random.randint(0,255,(100,3))
+    # Lucas Kanade optical flow parameters
+    lk_params = dict( winSize  = (15,15),
+                       maxLevel = 2,
+                       criteria = (cv2.TERM_CRITERIA_EPS | cv2.TERM_CRITERIA_COUNT, 10, 0.03))
+    # Random colors
+    color = np.random.randint(0,255,(100,3))
 
-        ##Background UI 삽입
-        backgroundUI = myUtills.BitwiseImage(cv2.imread('back_img.png'))
+    ##Background UI 삽입
+    backgroundUI = myUtills.BitwiseImage(cv2.imread('back_img.png'))
 
-        # Take first frame and find corners in it
-        ret, old_frame = cap.read()
-        old_gray = cv2.cvtColor(old_frame, cv2.COLOR_BGR2GRAY)
+    # Take first frame and find corners in it
+    ret, old_frame = cap.read()
+    old_gray = cv2.cvtColor(old_frame, cv2.COLOR_BGR2GRAY)
 
-        # Set tracking points
-        p0 = np.array([[[200.0, 200.0]], [[180.0, 180.0]]]) #tracking하는 포인트 위치와 개수 설정
-        p0 = np.float32(p0)
+    # Set tracking points
+    p0 = np.array([[[200.0, 200.0]], [[180.0, 180.0]]]) #tracking하는 포인트 위치와 개수 설정
+    p0 = np.float32(p0)
 
-        # Create a mask image for drawing purposes
-        mask = np.zeros_like(old_frame)
+    # Create a mask image for drawing purposes
+    mask = np.zeros_like(old_frame)
+
+    # body detector and overlayer
+    body_detector = myUtills.detector()
+    clothes_overlayer = myUtills.overlayer()
 
     while(timer_over == True):
-        # optical flow
+        # 1. optical flow
         ret, realframe = cap.read()
         realframe = cv2.flip(realframe, 1)  # 좌우반전
 
@@ -94,6 +102,17 @@ def main():
             # Now update the previous frame and previous points
             old_gray = frame_gray.copy()
             p0 = good_new.reshape(-1, 1, 2)
+
+
+        # 2.detect body
+        realframe = body_detector.detect_body2(realframe)
+        box_coordinate = body_detector.box_coordinate
+
+        # 3.overlay clothes
+        realframe = clothes_overlayer.overlay(realframe, box_coordinate)
+
+
+
 
         #Background UI 삽입
         backgroundUI.setImage(realframe, 0, 0)
