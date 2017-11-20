@@ -18,8 +18,8 @@ def checkHandPosition(y, x):
 def main():
 
 
-    cap = cv2.VideoCapture('video_1.mp4')
-    #cap = cv2.VideoCapture(0)
+    #cap = cv2.VideoCapture('video_1.mp4')
+    cap = cv2.VideoCapture(0)
 
     init_time = time.time()
 
@@ -73,6 +73,7 @@ def main():
     mask = np.zeros_like(old_frame)
 
     # body detector and overlayer
+
     body_detector = myUtills.detector()
     clothes_overlayer = myUtills.overlayer()
 

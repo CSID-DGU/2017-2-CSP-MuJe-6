@@ -7,7 +7,7 @@ class BitwiseImage:
     def setImage(self, frame, y, x):
         rows,cols,channels = self.img.shape
 
-        roi = frame[0:rows, 0:cols]
+        roi = frame[y:rows+y, x:cols+x]
 
         # create mask from logo
         img2gray = cv2.cvtColor(self.img,cv2.COLOR_BGR2GRAY)
@@ -66,7 +66,7 @@ class detector:
         path_eye = pre_path + 'haarcascade_eye.xml'
         path_hog = pre_path + 'hogcascade_pedestrians.xml'
 
-        face_cascade = cv2.CascadeClassifier(path_face)
+        face_cascade = cv2.CascadeClassifier(path_upper)
 
         gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
         found = face_cascade.detectMultiScale(gray, 1.3, 5)
@@ -83,13 +83,17 @@ class detector:
 
 class overlayer:
     img = cv2.imread('blue.png')
+    clothes = BitwiseImage(img)
 
     def overlay(self, frame_detected, box_coordinate):
 
 
         if box_coordinate is None :
+            print("no!! box_coordinate")
             return frame_detected
         else :
+
+            print(box_coordinate)
             frame = frame_detected
 
             x1 = box_coordinate[0][0]
@@ -97,36 +101,26 @@ class overlayer:
             x2 = box_coordinate[1][0]
             y2 = box_coordinate[1][1]
 
-            img = overlayer.img
+            if x1 is None :
+                return frame
 
-            # 1.크기 설정
-            ratio = (x2 - x1)*5.5
-            r = ratio / img.shape[1]
-            dim = (int(ratio), int(img.shape[0] * r))
-            resized = cv2.resize(img, dim, interpolation=cv2.INTER_AREA)
-            img2 = resized
-            rows, cols, channels = img2.shape
+            else :
 
-            # 2. y축 위치 설정
-            x_move = -110
-            y_move = int((y2 - y1)*1.5)
+                # 1.크기 설정
+                ratio = (x2 - x1) #4.3 기준
+                r = ratio / self.clothes.img.shape[1]
+                dim = (int(ratio), int(self.clothes.img.shape[0] * r))
+                resized = cv2.resize(self.clothes.img, dim, interpolation=cv2.INTER_AREA)
+                img2 = resized
+                rows, cols, channels = img2.shape
+                self.clothes.img = img2
 
-            # 사람이 감지되었다고 가정
-            roi = frame[y1 + y_move:rows + y1 + y_move, x1+x_move:cols + x1+x_move]
 
-            # create mask from logo
-            img2gray = cv2.cvtColor(img2, cv2.COLOR_BGR2GRAY)
-            ret, mask = cv2.threshold(img2gray, 5, 255, cv2.THRESH_BINARY)
-            mask_inv = cv2.bitwise_not(mask)
+                # 2. y축 위치 설정
+                x_move = -80
+                y_move = int((y2 - y1)*1.5)
 
-            # black out the area of logo in ROI
-            img1_bg = cv2.bitwise_and(roi, roi, mask=mask_inv)
+                # 사람이 감지되었다고 가정
 
-            # Take only region of logo from logo image.
-            # img2_fg = cv2.bitwise_and(img2,img2,mask = mask)
-
-            # Put logo in ROI and modify the main image
-            dst = cv2.add(img1_bg, img2)
-            frame[y1 + y_move:rows + y1 + y_move, x1+x_move:cols + x1+x_move] = dst
-
-            return frame
+                self.clothes.setImage(frame,y1+y_move, x1+x_move)
+                return frame
