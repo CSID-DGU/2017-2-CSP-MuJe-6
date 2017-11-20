@@ -53,7 +53,7 @@ class detector:
 
         return frame
 
-        # haar_version
+        
 
     def detect_body2(self, frame):
 
