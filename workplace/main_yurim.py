@@ -2,7 +2,7 @@ import cv2
 import numpy as np
 import time
 from src import myUtills
-
+#
 
 def draw_text(frame, text, x, y, color=(255, 255, 255), thickness=20, size=5):
     if x is not None and y is not None:
