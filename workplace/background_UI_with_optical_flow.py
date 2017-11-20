@@ -1,32 +1,22 @@
-import numpy as np
 import cv2
-from workplace import BitwiseImage
+import numpy as np
 
-def checkHandPosition(y, x):
+from src import myUtills
+
+
+def checkHandPosition(y, x, ):
     global wearing
     if (x>34 and x<110) and (y>41 and y<111):
-        wearing = BitwiseImage(cv2.imread('suit3.png'))
+        wearing = myUtills(cv2.imread('suit3.png'))
         print("hello")
     elif (x>355 and x<422) and (y>41 and y<111):
         print("haha")
 
-# ShiTomasi corner detection parameters
-feature_params = dict( maxCorners = 100,
-                       qualityLevel = 0.3,
-                       minDistance = 7,
-                       blockSize = 7 )
-# Lucas Kanade optical flow parameters
-lk_params = dict( winSize  = (15,15),
-                  maxLevel = 2,
-                  criteria = (cv2.TERM_CRITERIA_EPS | cv2.TERM_CRITERIA_COUNT, 10, 0.03))
-# Random colors
-color = np.random.randint(0,255,(100,3))
-
 if __name__ == '__main__':
 
     ##Background UI 삽입
-    backgroundUI = BitwiseImage(cv2.imread('back_img.png'))
-    wearing = BitwiseImage(cv2.imread('suit2.png'))
+    backgroundUI = myUtills(cv2.imread('back_img.png'))
+    wearing = myUtills(cv2.imread('suit2.png'))
     ##Optical Flow 삽입
     cap = cv2.VideoCapture(0)
 

@@ -22,4 +22,6 @@ class BitwiseImage:
 
         # Put logo in ROI and modify the main image
         dst = cv2.add(img1_bg,img2_fg)
+
+        #y,x의 좌표 위치부터 ROI 지정
         frame[y:rows+y, x:cols+x ] = dst
