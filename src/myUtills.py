@@ -7,6 +7,7 @@ class BitwiseImage:
     def setImage(self, frame, y, x):
         rows,cols,channels = self.img.shape
 
+        # y,x의 좌표 위치부터 ROI 지정
         roi = frame[y:rows+y, x:cols+x]
 
         # create mask from logo
@@ -23,7 +24,6 @@ class BitwiseImage:
         # Put logo in ROI and modify the main image
         dst = cv2.add(img1_bg,img2_fg)
 
-        #y,x의 좌표 위치부터 ROI 지정
         frame[y:rows+y, x:cols+x ] = dst
 
 
@@ -86,9 +86,9 @@ class detector:
 class overlayer:
     img = cv2.imread('blue.png')
     clothes = BitwiseImage(img)
+    isResize = False
 
     def overlay(self, frame_detected, box_coordinate):
-
 
         if box_coordinate is None :
             print("no!! box_coordinate")
@@ -105,21 +105,20 @@ class overlayer:
 
             if x1 is None :
                 return frame
-
             else :
-
-                # 1.크기 설정
-                ratio = (x2 - x1) #4.3 기준
-                r = ratio / self.clothes.img.shape[1]
-                dim = (int(ratio), int(self.clothes.img.shape[0] * r))
-                resized = cv2.resize(self.clothes.img, dim, interpolation=cv2.INTER_AREA)
-                img2 = resized
-                rows, cols, channels = img2.shape
-                self.clothes.img = img2
-
+                if (not self.isResize):
+                    # 1.크기 설정
+                    ratio = (x2 - x1) #4.3 기준
+                    r = ratio / self.clothes.img.shape[1]
+                    dim = (int(ratio), int(self.clothes.img.shape[0] * r))
+                    resized = cv2.resize(self.clothes.img, dim, interpolation=cv2.INTER_AREA)
+                    img2 = resized
+                   # rows, cols, channels = img2.shape
+                    self.clothes.img = img2
+                    self.isResize = True
 
                 # 2. y축 위치 설정
-                x_move = -80
+                x_move = 30
                 y_move = int((y2 - y1)*1.5)
 
                 # 사람이 감지되었다고 가정
