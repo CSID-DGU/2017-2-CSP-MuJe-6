@@ -1,13 +1,14 @@
 import cv2
 import numpy as np
 import time
+import random
 from src import myUtills
-
 
 def draw_text(frame, text, x, y, color=(255, 255, 255), thickness=20, size=5):
     if x is not None and y is not None:
         cv2.putText(
             frame, text, (int(x), int(y)), cv2.FONT_HERSHEY_SIMPLEX, size, color, thickness)
+
 
 def checkHandPosition(y, x):
     if (x>34 and x<110) and (y>41 and y<111):
@@ -15,12 +16,11 @@ def checkHandPosition(y, x):
     elif (x>355 and x<422) and (y>41 and y<111):
         print("우측 상단 원 클릭")
 
-def main():
 
+def main():
 
     #cap = cv2.VideoCapture('video_1.mp4')
     cap = cv2.VideoCapture(0)
-
     init_time = time.time()
 
     counter = 5 # 화면에 띄울 숫자
@@ -29,10 +29,19 @@ def main():
 
     timer_over = False # 타이머 끝났는지 확인용
 
+    left_hand = (200, 350)
+    right_hand = (400, 350)
+
+    # Random colors
+    color = np.random.randint(0,255,(100,3))
+
     while (cap.isOpened()):
         ret, frame = cap.read()
 
+        dot_color = random.choice(color)
         frame = cv2.flip(frame, 1)  # 좌우반전
+        frame = cv2.circle(frame, left_hand, 5, dot_color.tolist(), -1)
+        frame = cv2.circle(frame, right_hand, 5, dot_color.tolist(), -1)
 
         if ret == True:
             center_x = int(frame.shape[1] / 2.5)
@@ -55,8 +64,6 @@ def main():
     lk_params = dict( winSize  = (15,15),
                        maxLevel = 2,
                        criteria = (cv2.TERM_CRITERIA_EPS | cv2.TERM_CRITERIA_COUNT, 10, 0.03))
-    # Random colors
-    color = np.random.randint(0,255,(100,3))
 
     ##Background UI 삽입
     backgroundUI = myUtills.BitwiseImage(cv2.imread('back_img.png'))
@@ -66,7 +73,7 @@ def main():
     old_gray = cv2.cvtColor(old_frame, cv2.COLOR_BGR2GRAY)
 
     # Set tracking points
-    p0 = np.array([[[200.0, 200.0]], [[180.0, 180.0]]]) #tracking하는 포인트 위치와 개수 설정
+    p0 = np.array([[list(left_hand)], [list(right_hand)]]) #tracking하는 포인트 위치와 개수 설정
     p0 = np.float32(p0)
 
     # Create a mask image for drawing purposes
@@ -116,7 +123,7 @@ def main():
             box_coordinate = body_detector.box_coordinate
 
             # 3.overlay clothes
-            realframe = clothes_overlayer.overlay(realframe, box_coordinate)
+            # realframe = clothes_overlayer.overlay(realframe, box_coordinate)
 
 
 
