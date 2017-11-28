@@ -19,8 +19,8 @@ def checkHandPosition(y, x):
 
 def main():
 
-    #cap = cv2.VideoCapture('video_1.mp4')
-    cap = cv2.VideoCapture(0)
+    cap = cv2.VideoCapture('video_2.mp4')
+    #cap = cv2.VideoCapture(0)
     init_time = time.time()
 
     counter = 5 # 화면에 띄울 숫자
@@ -29,36 +29,38 @@ def main():
 
     timer_over = False # 타이머 끝났는지 확인용
 
-    left_hand = (200, 350)
-    right_hand = (400, 350)
+    left_hand = (200, 600)
+    right_hand = (500, 600)
+    #left_arm = (220, 300)
+    #right_arm = (480,300)
 
     # Random colors
     color = np.random.randint(0,255,(100,3))
 
-    while (cap.isOpened()):
-        ret, frame = cap.read()
-
-        dot_color = random.choice(color)
-        frame = cv2.flip(frame, 1)  # 좌우반전
-        frame = cv2.circle(frame, left_hand, 5, dot_color.tolist(), -1)
-        frame = cv2.circle(frame, right_hand, 5, dot_color.tolist(), -1)
-
-        if ret == True:
-            center_x = int(frame.shape[1] / 2.5)
-            center_y = int(frame.shape[0] / 2)
-
-            if (time.time() < end_time):
-                draw_text(frame, str(counter), center_x, center_y)
-            if (time.time() > secondPassed): # 1초가 지난 경우
-                counter -= 1
-                secondPassed += 1
-
-            cv2.imshow('frame', frame)
-            if (cv2.waitKey(1) & 0xFF == ord('q')) or (time.time() > end_time):
-                timer_over = True
-                break
-        else:
-            break
+    # while (cap.isOpened()):
+    #     ret, frame = cap.read()
+    #
+    #     dot_color = random.choice(color)
+    #     frame = cv2.flip(frame, 1)  # 좌우반전
+    #     frame = cv2.circle(frame, left_hand, 5, dot_color.tolist(), -1)
+    #     frame = cv2.circle(frame, right_hand, 5, dot_color.tolist(), -1)
+    #
+    #     if ret == True:
+    #         center_x = int(frame.shape[1] / 2.5)
+    #         center_y = int(frame.shape[0] / 2)
+    #
+    #         if (time.time() < end_time):
+    #             draw_text(frame, str(counter), center_x, center_y)
+    #         if (time.time() > secondPassed): # 1초가 지난 경우
+    #             counter -= 1
+    #             secondPassed += 1
+    #
+    #         cv2.imshow('frame', frame)
+    #         if (cv2.waitKey(1) & 0xFF == ord('q')) or (time.time() > end_time):
+    #             timer_over = True
+    #             break
+    #     else:
+    #         break
 
     # Lucas Kanade optical flow parameters
     lk_params = dict( winSize  = (15,15),
@@ -73,7 +75,7 @@ def main():
     old_gray = cv2.cvtColor(old_frame, cv2.COLOR_BGR2GRAY)
 
     # Set tracking points
-    p0 = np.array([[list(left_hand)], [list(right_hand)]]) #tracking하는 포인트 위치와 개수 설정
+    p0 = np.array([ [list(left_hand)], [list(right_hand)]]) #tracking하는 포인트 위치와 개수 설정
     p0 = np.float32(p0)
 
     # Create a mask image for drawing purposes
@@ -83,10 +85,12 @@ def main():
 
     body_detector = myUtills.detector()
     clothes_overlayer = myUtills.overlayer()
+    right_overlayer = myUtills.arm_overlayer()
 
     countframe = 0
 
-    while(timer_over == True):
+    #while(timer_over == True):
+    while True:
         countframe += 1
         if (countframe > 100000):
             countframe = 0
@@ -123,14 +127,20 @@ def main():
             box_coordinate = body_detector.box_coordinate
 
             # 3.overlay clothes
-            # realframe = clothes_overlayer.overlay(realframe, box_coordinate)
+            realframe = right_overlayer.overlay(realframe, box_coordinate, p1[1])
+            #print("p1",p1[0])
+            #print("p2", p1[1])
+            realframe = clothes_overlayer.overlay(realframe, box_coordinate)
+
+
+
 
 
 
 
             #Background UI 삽입
             backgroundUI.setImage(realframe, 0, 0)
-            # wearing.setImage(realframe, 0, 0)
+            #wearing.setImage(realframe, 0, 0)
 
             if (st.all() == 1): # st == 1 이면 프레임 안
                 img = cv2.add(realframe, mask)

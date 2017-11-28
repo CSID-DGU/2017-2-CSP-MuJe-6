@@ -1,8 +1,10 @@
 import cv2
+import math
 
 class BitwiseImage:
     def __init__(self, img):
         self.img = img
+        self.origin = img
 
     def setImage(self, frame, y, x):
         rows,cols,channels = self.img.shape
@@ -12,7 +14,7 @@ class BitwiseImage:
 
         # create mask from logo
         img2gray = cv2.cvtColor(self.img,cv2.COLOR_BGR2GRAY)
-        ret, mask = cv2.threshold(img2gray, 5, 255, cv2.THRESH_BINARY)
+        ret, mask = cv2.threshold(img2gray, 30, 255, cv2.THRESH_BINARY)
         mask_inv = cv2.bitwise_not(mask)
 
         # black out the area of logo in ROI
@@ -72,7 +74,7 @@ class detector:
 
         gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
         found = face_cascade.detectMultiScale(gray, 1.3, 5)
-        print(found)
+        #print(found)
 
         for (x, y, w, h) in found:
             pad_w, pad_h = int(0.15 * w), int(0.05 * h)
@@ -84,7 +86,7 @@ class detector:
 
 
 class overlayer:
-    img = cv2.imread('blue.png')
+    img = cv2.imread('clothes/pink/body.png')
     clothes = BitwiseImage(img)
     isResize = False
 
@@ -95,7 +97,7 @@ class overlayer:
             return frame_detected
         else :
 
-            print(box_coordinate)
+            #print(box_coordinate)
             frame = frame_detected
 
             x1 = box_coordinate[0][0]
@@ -108,7 +110,7 @@ class overlayer:
             else :
                 if (not self.isResize):
                     # 1.크기 설정
-                    ratio = (x2 - x1) #4.3 기준
+                    ratio = (x2 - x1)*6 #4.3 기준
                     r = ratio / self.clothes.img.shape[1]
                     dim = (int(ratio), int(self.clothes.img.shape[0] * r))
                     resized = cv2.resize(self.clothes.img, dim, interpolation=cv2.INTER_AREA)
@@ -118,10 +120,68 @@ class overlayer:
                     self.isResize = True
 
                 # 2. y축 위치 설정
-                x_move = 30
-                y_move = int((y2 - y1)*1.5)
+                x_move = -130
+                y_move = int((y2 - y1))-10
 
                 # 사람이 감지되었다고 가정
 
+                self.clothes.setImage(frame,y1+y_move, x1+x_move)
+                return frame
+
+class arm_overlayer:
+    img = cv2.imread('clothes/pink/right.png')
+    clothes = BitwiseImage(img)
+    isResize = False
+
+    def rotationDegree(self, x1, y1, x2, y2):
+
+        return (-math.atan((y2 - y1) / (x2 - x1)) * (180 / 3.141592))
+
+    def overlay(self, frame_detected, box_coordinate, hand):
+
+        if box_coordinate is None :
+            print("no!! box_coordinate")
+            return frame_detected
+        else :
+
+            #print(box_coordinate)
+            frame = frame_detected
+
+            x1 = box_coordinate[0][0]
+            y1 = box_coordinate[0][1]
+            x2 = box_coordinate[1][0]
+            y2 = box_coordinate[1][1]
+
+            if x1 is None :
+                return frame
+            else :
+                if (not self.isResize):
+                    # 1.크기 설정
+                    ratio = (x2 - x1)*5 #4.3 기준
+                    r = ratio / self.clothes.origin.shape[1]
+                    dim = (int(ratio), int(self.clothes.origin.shape[0] * r))
+                    resized = cv2.resize(self.clothes.origin, dim, interpolation=cv2.INTER_AREA)
+                    img2 = resized
+                   # rows, cols, channels = img2.shape
+                    self.clothes.origin = img2
+                    self.isResize = True
+
+
+                #회전
+                right_hand = hand[0]
+                print("x2,y2;     ", x2, y2)
+                print("right hand;", right_hand)
+                num_rows, num_cols = self.clothes.origin.shape[:2]
+
+                degree = self.rotationDegree( x2, y2,right_hand[0] ,right_hand[1] )
+                rotation_matrix = cv2.getRotationMatrix2D((num_cols/2-20,num_rows/2-20),degree , 1)
+                img_rotation = cv2.warpAffine(self.clothes.origin, rotation_matrix , (num_cols, num_rows))
+                self.clothes.img = img_rotation
+
+                # 2. y축 위치 설정
+                x_move = -2
+                y_move = 21
+
+                # 사람이 감지되었다고 가정
                 self.clothes.setImage(frame,y1+y_move, x1+x_move)
                 return frame
