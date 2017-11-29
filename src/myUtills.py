@@ -86,12 +86,14 @@ class detector:
 
 
 class overlayer:
-    img = cv2.imread('clothes/pink/body.png')
-    clothes = BitwiseImage(img)
     isResize = False
-    img_array = ['blue.png', 'red.png']
+    img_array = listOfClothes()
 
-    def overlay(self, frame_detected, box_coordinate):
+
+    def overlay(self,frame_detected, box_coordinate, clothesIndex):
+
+        img = self.img_array.getClothes( clothesIndex[0],clothesIndex[1])
+        clothesToWear = BitwiseImage(img) #입을 옷을 Bitewise 세팅
 
         if box_coordinate is None :
             print("no!! box_coordinate")
@@ -112,30 +114,30 @@ class overlayer:
                 if (not self.isResize):
                     # 1.크기 설정
                     ratio = (x2 - x1)*6 #4.3 기준
-                    r = ratio / self.clothes.img.shape[1]
-                    dim = (int(ratio), int(self.clothes.img.shape[0] * r))
-                    resized = cv2.resize(self.clothes.img, dim, interpolation=cv2.INTER_AREA)
+                    r = ratio / clothesToWear.img.shape[1]
+                    dim = (int(ratio), int(clothesToWear.img.shape[0] * r))
+                    resized = cv2.resize(clothesToWear.img, dim, interpolation=cv2.INTER_AREA)
                     img2 = resized
                    # rows, cols, channels = img2.shape
-                    self.clothes.img = img2
+                    clothesToWear.img = img2
                     self.isResize = True
 
                 # 2. y축 위치 설정
-                x_move = -130
-                y_move = int((y2 - y1))-10
+                x_move = -100
+                y_move = int((y2 - y1))-20
 
                 # 사람이 감지되었다고 가정
 
-                self.clothes.setImage(frame,y1+y_move, x1+x_move)
+                clothesToWear.setImage(frame,y1+y_move, x1+x_move)
                 return frame
 
     def changeClothes(self, frame_detected, box_coordinate):
-        self.clothes.img = cv2.imread(self.img_array[1])
+        self.clothes.img = cv2.imread(self.img_array[0])
         self.isResize = False
         return self.overlay(frame_detected, box_coordinate)
 
 class arm_overlayer:
-    img = cv2.imread('clothes/pink/right.png')
+    img_array = listOfClothes()
     clothes = BitwiseImage(img)
     isResize = False
 
@@ -143,7 +145,12 @@ class arm_overlayer:
 
         return (-math.atan((y2 - y1) / (x2 - x1)) * (180 / 3.141592))
 
-    def overlay(self, frame_detected, box_coordinate, hand):
+    def overlay(self, frame_detected, box_coordinate, hand,clothesIndex):
+
+        img = self.img_array.getClothes(clothesIndex[0], clothesIndex[1])
+        clothesToWear = BitwiseImage(img)  # 입을 옷을 Bitewise 세팅
+        left = hand[0]
+        right = hand[1]
 
         if box_coordinate is None :
             print("no!! box_coordinate")
@@ -191,3 +198,12 @@ class arm_overlayer:
                 # 사람이 감지되었다고 가정
                 self.clothes.setImage(frame,y1+y_move, x1+x_move)
                 return frame
+
+
+class listOfClothes :
+
+    array = [["blue","pink","brown"],["red","orange","suit"]] #옷 폴더 이름
+
+
+    def getClothes (self,i,j) :
+        return self.array[i][j]
