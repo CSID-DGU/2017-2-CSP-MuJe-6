@@ -11,11 +11,17 @@ def draw_text(frame, text, x, y, color=(255, 255, 255), thickness=20, size=5):
 
 
 def checkHandPosition(y, x):
-    if (x>34 and x<110) and (y>41 and y<111):
-        print("좌측 상단 원 클릭")
-    elif (x>355 and x<422) and (y>41 and y<111):
-        print("우측 상단 원 클릭")
-
+    if (x>552 and x<687):
+        if (y>131 and y<217):
+            print("위쪽 화살표 클릭")
+        elif (y>247 and y<364):
+            print("첫번째 상자 클릭")
+        elif (y>394 and y<511):
+            print("두번째 상자 클릭")
+        elif (y>541 and y<658):
+            print("세번째 상자 클릭")
+        elif (y>688 and y<774):
+            print("아래쪽 화살표 클릭")
 
 def main():
 
@@ -30,37 +36,38 @@ def main():
     timer_over = False # 타이머 끝났는지 확인용
 
     left_hand = (200, 600)
-    right_hand = (500, 600)
+    right_hand = (600, 600)
     #left_arm = (220, 300)
     #right_arm = (480,300)
 
     # Random colors
     color = np.random.randint(0,255,(100,3))
 
-    # while (cap.isOpened()):
-    #     ret, frame = cap.read()
-    #
-    #     dot_color = random.choice(color)
-    #     frame = cv2.flip(frame, 1)  # 좌우반전
-    #     frame = cv2.circle(frame, left_hand, 5, dot_color.tolist(), -1)
-    #     frame = cv2.circle(frame, right_hand, 5, dot_color.tolist(), -1)
-    #
-    #     if ret == True:
-    #         center_x = int(frame.shape[1] / 2.5)
-    #         center_y = int(frame.shape[0] / 2)
-    #
-    #         if (time.time() < end_time):
-    #             draw_text(frame, str(counter), center_x, center_y)
-    #         if (time.time() > secondPassed): # 1초가 지난 경우
-    #             counter -= 1
-    #             secondPassed += 1
-    #
-    #         cv2.imshow('frame', frame)
-    #         if (cv2.waitKey(1) & 0xFF == ord('q')) or (time.time() > end_time):
-    #             timer_over = True
-    #             break
-    #     else:
-    #         break
+    while (cap.isOpened()):
+        ret, frame = cap.read()
+
+        dot_color = random.choice(color)
+        frame = cv2.flip(frame, 1)  # 좌우반전
+        frame = cv2.circle(frame, left_hand, 5, dot_color.tolist(), -1)
+        frame = cv2.circle(frame, right_hand, 5, dot_color.tolist(), -1)
+
+        if ret == True:
+            center_x = int(frame.shape[1] / 2.5)
+            center_y = int(frame.shape[0] / 2)
+
+            if (time.time() < end_time):
+                draw_text(frame, str(counter), center_x, center_y)
+            if (time.time() > secondPassed): # 1초가 지난 경우
+                counter -= 1
+                secondPassed += 1
+
+            frame = cv2.resize(frame, (360, 640))  # Resize image
+            cv2.imshow('frame', frame)
+            if (cv2.waitKey(1) & 0xFF == ord('q')) or (time.time() > end_time):
+                timer_over = True
+                break
+        else:
+            break
 
     # Lucas Kanade optical flow parameters
     lk_params = dict( winSize  = (15,15),
@@ -68,7 +75,9 @@ def main():
                        criteria = (cv2.TERM_CRITERIA_EPS | cv2.TERM_CRITERIA_COUNT, 10, 0.03))
 
     ##Background UI 삽입
-    backgroundUI = myUtills.BitwiseImage(cv2.imread('back_img.png'))
+    back_img = cv2.imread('back_img.png')
+    # back_img = cv2.resize(back_img, (720, 1280))
+    backgroundUI = myUtills.BitwiseImage(back_img)
 
     # Take first frame and find corners in it
     ret, old_frame = cap.read()
@@ -131,6 +140,8 @@ def main():
             #print("p1",p1[0])
             #print("p2", p1[1])
             realframe = clothes_overlayer.overlay(realframe, box_coordinate)
+            realframe = clothes_overlayer.changeClothes(realframe, box_coordinate)
+
 
 
 
@@ -146,6 +157,8 @@ def main():
                 img = cv2.add(realframe, mask)
             else: # 프레임 밖으로 벗어난 경우
                 img = realframe
+
+            img = cv2.resize(img, (360, 640))  # Resize image
 
             cv2.imshow('frame', img)
 
