@@ -30,7 +30,7 @@ def main():
     timer_over = False # 타이머 끝났는지 확인용
 
     left_hand = (200, 600)
-    right_hand = (500, 600)
+    right_hand = (480, 600)
     #left_arm = (220, 300)
     #right_arm = (480,300)
 
@@ -42,8 +42,8 @@ def main():
     #
     #     dot_color = random.choice(color)
     #     frame = cv2.flip(frame, 1)  # 좌우반전
-    #     frame = cv2.circle(frame, left_hand, 5, dot_color.tolist(), -1)
-    #     frame = cv2.circle(frame, right_hand, 5, dot_color.tolist(), -1)
+    #     # frame = cv2.circle(frame, left_hand, 5, dot_color.tolist(), -1)
+    #     # frame = cv2.circle(frame, right_hand, 5, dot_color.tolist(), -1)
     #
     #     if ret == True:
     #         center_x = int(frame.shape[1] / 2.5)
@@ -55,6 +55,8 @@ def main():
     #             counter -= 1
     #             secondPassed += 1
     #
+    #         frame = cv2.circle(frame, left_hand, 5, dot_color.tolist(), -1)
+    #         frame = cv2.circle(frame, right_hand, 5, dot_color.tolist(), -1)
     #         cv2.imshow('frame', frame)
     #         if (cv2.waitKey(1) & 0xFF == ord('q')) or (time.time() > end_time):
     #             timer_over = True
@@ -68,7 +70,7 @@ def main():
                        criteria = (cv2.TERM_CRITERIA_EPS | cv2.TERM_CRITERIA_COUNT, 10, 0.03))
 
     ##Background UI 삽입
-    backgroundUI = myUtills.BitwiseImage(cv2.imread('back_img.png'))
+    backgroundUI = myUtills.BitwiseImage(cv2.imread('back_img.png')) #객체에 이미지 저장
 
     # Take first frame and find corners in it
     ret, old_frame = cap.read()
@@ -98,6 +100,7 @@ def main():
             # 1. optical flow
             ret, realframe = cap.read()
             realframe = cv2.flip(realframe, 1)  # 좌우반전
+            print(realframe.shape)
 
             frame_gray = cv2.cvtColor(realframe, cv2.COLOR_BGR2GRAY)
 
@@ -146,7 +149,7 @@ def main():
                 img = cv2.add(realframe, mask)
             else: # 프레임 밖으로 벗어난 경우
                 img = realframe
-
+            img = cv2.resize(img,(360,640))
             cv2.imshow('frame', img)
 
             # 카메라 종료
