@@ -20,8 +20,10 @@ def checkHandPosition(y, x):
             print("두번째 상자 클릭")
         elif (y>541 and y<658):
             print("세번째 상자 클릭")
+
         elif (y>688 and y<774):
             print("아래쪽 화살표 클릭")
+
 
 def main():
 
@@ -65,6 +67,7 @@ def main():
                     secondPassed += 1
 
                 # frame = cv2.resize(frame, (360, 640))  # Resize image
+                frame = cv2.resize(frame, (360, 640))  # Resize image
                 cv2.imshow('frame', frame)
                 if (cv2.waitKey(1) & 0xFF == ord('q')) or (time.time() > end_time):
                     timer_over = True
@@ -102,8 +105,12 @@ def main():
 
         countframe = 0
 
-
+        clothesIndex = [0, 1]  # 더미변수 (checkPosition 에서 받을 예정)
+        # 오버레이 루프
         while(True):
+
+
+
             countframe += 1
             if (countframe > 100000):
                 countframe = 0
@@ -126,26 +133,30 @@ def main():
                     for i, (new, old) in enumerate(zip(good_new, good_old)):
                         a, b = new.ravel()  # 현재 프레임의 좌표값
                         c, d = old.ravel()  # 이전 프레임의 좌표값
-                        # checkHandPosition(a,b)
+                        #checkHandPosition(a,b)
+                        #print(a,b)
                         mask = cv2.line(mask, (a, b), (c, d), color[i].tolist(), 2)  # 현재와 이전의 프레임을 이어줌
                         realframe = cv2.circle(realframe, (a, b), 5, color[i].tolist(), -1)
+
 
                     # Now update the previous frame and previous points
                     old_gray = frame_gray.copy()
                     p0 = good_new.reshape(-1, 1, 2)
 
 
+
+
                 # 2.detect body
+
                 realframe = body_detector.detect_body2(realframe)
                 box_coordinate = body_detector.box_coordinate
 
                 # 3.overlay clothes
-                clothesIndex = [0,0] #더미변수 (checkPosition 에서 받을 예정)
 
-                #realframe = right_overlayer.overlay(realframe, box_coordinate, p1, clothesIndex) #프레임, 얼굴좌표, (왼좌표. 오른좌표)
-                #print("p1",p1[0])
-                #print("p2", p1[1])
-                realframe = clothes_overlayer.overlay(realframe, box_coordinate, clothesIndex)
+                print("left:",p1[0][0])
+                print("right:",p1[1][0])
+                realframe = right_overlayer.overlay(realframe, box_coordinate, p1, clothesIndex) #프레임, 얼굴좌표, (왼좌표. 오른좌표)
+                realframe = clothes_overlayer.overlay(realframe, box_coordinate,clothesIndex)
                 #realframe = clothes_overlayer.changeClothes(realframe, box_coordinate)
 
 
@@ -158,7 +169,7 @@ def main():
                     img = realframe
                     #break
 
-                #img = cv2.resize(img, (360, 640))  # Resize image
+                img = cv2.resize(img, (360, 640))  # Resize image
                 cv2.imshow('frame', img)
 
 
