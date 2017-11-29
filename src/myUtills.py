@@ -89,6 +89,7 @@ class overlayer:
     img = cv2.imread('clothes/pink/body.png')
     clothes = BitwiseImage(img)
     isResize = False
+    img_array = ['blue.png', 'red.png']
 
     def overlay(self, frame_detected, box_coordinate):
 
@@ -127,6 +128,11 @@ class overlayer:
 
                 self.clothes.setImage(frame,y1+y_move, x1+x_move)
                 return frame
+
+    def changeClothes(self, frame_detected, box_coordinate):
+        self.clothes.img = cv2.imread(self.img_array[1])
+        self.isResize = False
+        return self.overlay(frame_detected, box_coordinate)
 
 class arm_overlayer:
     img = cv2.imread('clothes/pink/right.png')
