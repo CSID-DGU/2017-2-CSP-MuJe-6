@@ -4,14 +4,12 @@ import math
 class BitwiseImage:
     def __init__(self, img):
         self.img = img
-        self.origin = img
 
     def setImage(self, frame, y, x):
         rows,cols,channels = self.img.shape
 
         # y,x의 좌표 위치부터 ROI 지정
         roi = frame[y:rows+y, x:cols+x]
-        #roi = frame[0:rows,0:cols]
 
         # create mask from logo
         img2gray = cv2.cvtColor(self.img,cv2.COLOR_BGR2GRAY)
@@ -27,7 +25,6 @@ class BitwiseImage:
         # Put logo in ROI and modify the main image
         dst = cv2.add(img1_bg,img2_fg)
         frame[y:rows+y, x:cols+x ] = dst
-        #frame[0:rows, 0:cols] = dst
 
 
 class detector:
@@ -152,7 +149,7 @@ class arm_overlayer:
         left = hand[0][0] #왼손좌표
         right = hand[1][0] #오른손좌표
 
-        img = self.img_array.getClothes(clothesIndex[0], clothesIndex[1])
+        img = self.img_array.getClothes(clothesIndex[0], clothesIndex[1]) # 옷 폴더 이름 string 값
 
         leftInstance =  BitwiseImage(cv2.imread("clothes/" + img + "/left.png")) # 입을 옷을 Bitewise 세팅
         rightInstance = BitwiseImage(cv2.imread("clothes/" + img + "/right.png"))
@@ -186,13 +183,16 @@ class arm_overlayer:
                 imgRotation = cv2.warpAffine(armArray[i], rotation_matrix , (num_cols, num_rows))
                 armArray[i] = imgRotation
 
-                # 2. y축 위치 설정
-                x_move = -100
-                y_move = -100
 
-                #leftInstance.setImage(frame,y2+y_move, x2+x_move)
+            leftInstance.img = armArray[0]
+            rightInstance.img = armArray[1]
+            cv2.imshow("left", leftInstance.img)
+            cv2.imshow("right",rightInstance.img)
+            # 2. y축 위치 설정
+            x_move = -60
+            y_move = -20
 
-            cv2.imshow("left", armArray[0])
-            cv2.imshow("right", armArray[1])
+            rightInstance.setImage(frame,y2+y_move-20, x2-x_move-100)
+            leftInstance.setImage(frame,y2+y_move++3, x1+x_move-117)
             return frame
 
