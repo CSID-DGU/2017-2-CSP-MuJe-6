@@ -9,21 +9,24 @@ def draw_text(frame, text, x, y, color=(255, 255, 255), thickness=20, size=5):
         cv2.putText(
             frame, text, (int(x), int(y)), cv2.FONT_HERSHEY_SIMPLEX, size, color, thickness)
 
-
 def checkHandPosition(y, x):
     if (x>552 and x<687):
         if (y>131 and y<217):
+            return 0
             print("위쪽 화살표 클릭")
         elif (y>247 and y<364):
+            return 1
             print("첫번째 상자 클릭")
         elif (y>394 and y<511):
+            return 2
             print("두번째 상자 클릭")
         elif (y>541 and y<658):
+            return 3
             print("세번째 상자 클릭")
-
         elif (y>688 and y<774):
+            return 4
             print("아래쪽 화살표 클릭")
-
+        return 100
 
 def main():
 
@@ -143,15 +146,39 @@ def main():
                     old_gray = frame_gray.copy()
                     p0 = good_new.reshape(-1, 1, 2)
 
-
-
-
                 # 2.detect body
 
                 realframe = body_detector.detect_body2(realframe)
                 box_coordinate = body_detector.box_coordinate
 
-                # 3.overlay clothes
+                # 3. check hand position and run action
+
+                leftPosition = checkHandPosition(p1[0][0][1], p1[0][0][0])  # 왼손 위치 체크
+                rightPosition = checkHandPosition(p1[1][0][1], p1[1][0][0])  # 오른손 위치 체크
+
+                clothesArrayIdx = 0;
+
+                if (leftPosition == 0 or rightPosition == 0):
+                    # 위쪽 화살표 클릭
+                    if (not clothesArrayIdx == 0):  # 0인 경우는 첫번째 배열이므로 더이상 위쪽으로 넘어갈 수 없음
+                        clothesArrayIdx -= 1
+                        backgroundUI = myUtills.BitwiseImage(cv2.imread('back_img2.png'))
+                elif (leftPosition == 1 or rightPosition == 1):
+                    # 첫번째 아이템 클릭
+                    clothesIndex = [clothesArrayIdx, 0]
+                elif (leftPosition == 2 or rightPosition == 2):
+                    # 두번째 아이템 클릭
+                    clothesIndex = [clothesArrayIdx, 1]
+                elif (leftPosition == 3 or rightPosition == 3):
+                    # 세번째 아이템 클릭
+                    clothesIndex = [clothesArrayIdx, 2]
+                elif (leftPosition == 4 or rightPosition == 4):
+                    # 아래쪽 화살표 클릭
+                    if (clothesArrayIdx < 2):  # 배열 크기가 1이므로 그 이상은 배열이 없으므로 더이상 아래로 내려갈 수 없음
+                        clothesArrayIdx += 1
+                        backgroundUI = myUtills.BitwiseImage(cv2.imread('back_img3.png'))
+
+                # 4.overlay clothes
 
                 print("left:",p1[0][0])
                 print("right:",p1[1][0])
