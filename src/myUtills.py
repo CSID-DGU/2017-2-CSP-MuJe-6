@@ -165,8 +165,9 @@ class arm_overlayer:
             return frame_detected
         else :
             frame = frame_detected
-            x1,y1 = box_coordinate[0]
-            x2,y2 = box_coordinate[1]
+            print(box_coordinate)
+            x1 , y1 = box_coordinate[0]
+            x2 , y2 = box_coordinate[1]
 
             for i in range(2) :
                 #if (not self.isResize):

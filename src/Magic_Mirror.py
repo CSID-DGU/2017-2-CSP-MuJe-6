@@ -9,29 +9,29 @@ def draw_text(frame, text, x, y, color=(255, 255, 255), thickness=20, size=5):
         cv2.putText(
             frame, text, (int(x), int(y)), cv2.FONT_HERSHEY_SIMPLEX, size, color, thickness)
 
-def checkHandPosition(y, x):
+def checkHandPosition(y,x):
     if (x>552 and x<687):
         if (y>131 and y<217):
-            return 0
             print("위쪽 화살표 클릭")
+            return 0
         elif (y>247 and y<364):
-            return 1
             print("첫번째 상자 클릭")
+            return 1
         elif (y>394 and y<511):
-            return 2
             print("두번째 상자 클릭")
+            return 2
         elif (y>541 and y<658):
-            return 3
             print("세번째 상자 클릭")
+            return 3
         elif (y>688 and y<774):
-            return 4
             print("아래쪽 화살표 클릭")
+            return 4
         return 100
 
 def main():
 
-    cap = cv2.VideoCapture('video_2.mp4')
-    #cap = cv2.VideoCapture(0)
+    #cap = cv2.VideoCapture('video_2.mp4')
+    cap = cv2.VideoCapture(0)
 
     # Random colors
     color = np.random.randint(0,255,(100,3))
@@ -40,14 +40,14 @@ def main():
 
         init_time = time.time()
 
-        counter = 2  # 화면에 띄울 숫자
+        counter = 5  # 화면에 띄울 숫자
         end_time = init_time + counter + 1  # 타이머 끝나는 시간
         secondPassed = init_time + 1  # 1초가 지났는지 안지났는지 비교하는용
 
         timer_over = False  # 타이머 끝났는지 확인용
 
-        left_hand = (250, 600)
-        right_hand = (480, 600)
+        left_hand = (250, 400)
+        right_hand = (480, 400)
         # left_arm = (220, 300)
         # right_arm = (480,300)
 
@@ -70,7 +70,7 @@ def main():
                     secondPassed += 1
 
                 # frame = cv2.resize(frame, (360, 640))  # Resize image
-                frame = cv2.resize(frame, (360, 640))  # Resize image
+                #frame = cv2.resize(frame, (360, 640))  # Resize image
                 cv2.imshow('frame', frame)
                 if (cv2.waitKey(1) & 0xFF == ord('q')) or (time.time() > end_time):
                     timer_over = True
@@ -86,7 +86,7 @@ def main():
 
         ##Background UI 삽입
         back_img = cv2.imread('back_img.png')
-        # back_img = cv2.resize(back_img, (720, 1280))
+        #back_img = cv2.resize(back_img, (720, 1280))
         backgroundUI = myUtills.BitwiseImage(back_img)
 
         # Take first frame and find corners in it
@@ -111,9 +111,6 @@ def main():
         clothesIndex = [0, 1]  # 더미변수 (checkPosition 에서 받을 예정)
         # 오버레이 루프
         while(True):
-
-
-
             countframe += 1
             if (countframe > 100000):
                 countframe = 0
@@ -182,13 +179,13 @@ def main():
 
                 print("left:",p1[0][0])
                 print("right:",p1[1][0])
-                realframe = right_overlayer.overlay(realframe, box_coordinate, p1, clothesIndex) #프레임, 얼굴좌표, (왼좌표. 오른좌표)
-                realframe = clothes_overlayer.overlay(realframe, box_coordinate,clothesIndex)
+                #realframe = right_overlayer.overlay(realframe, box_coordinate, p1, clothesIndex) #프레임, 얼굴좌표, (왼좌표. 오른좌표)
+                #realframe = clothes_overlayer.overlay(realframe, box_coordinate,clothesIndex)
                 #realframe = clothes_overlayer.changeClothes(realframe, box_coordinate)
 
 
                 #Background UI 삽입
-                backgroundUI.setImage(realframe, 0, 0)
+                #backgroundUI.setImage(realframe, 0, 0)
 
                 if (st.all() == 1): # st == 1 이면 프레임 안
                     img = cv2.add(realframe, mask)
@@ -196,10 +193,8 @@ def main():
                     img = realframe
                     #break
 
-                img = cv2.resize(img, (360, 640))  # Resize image
+                #img = cv2.resize(img, (360, 640))  # Resize image
                 cv2.imshow('frame', img)
-
-
 
                 # 카메라 종료
                 k = cv2.waitKey(30) & 0xff
