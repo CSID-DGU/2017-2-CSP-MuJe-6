@@ -86,7 +86,8 @@ class detector:
 class listOfClothes :
 
     def __init__(self):
-        self.array = [["blue","pink","brown"],["red","orange","suit"]] #옷 폴더 이름
+        self.array = [["blue","pink","green_pants"],["blue_pants1","blue_pants2","blue_pants3"]] #옷 폴더 이름
+        self.whatClothes = [[0,0,1]]
 
     def getClothes (self,i,j) :
         return self.array[i][j]
@@ -102,7 +103,7 @@ class overlayer:
         clothesToWear = BitwiseImage(cv2.imread("clothes/"+img+"/body.png") )#입을 옷을 Bitewise 세팅
 
         if box_coordinate is None :
-            print("no!! box_coordinate")
+            #print("no!! box_coordinate")
             return frame_detected
         else :
 
@@ -162,7 +163,7 @@ class arm_overlayer:
             return frame_detected
         else :
             frame = frame_detected
-            print(box_coordinate)
+            #(box_coordinate)
             x1 , y1 = box_coordinate[0]
             x2 , y2 = box_coordinate[1]
 
@@ -179,7 +180,7 @@ class arm_overlayer:
                 num_rows, num_cols = armArray[i].shape[:2]
                 degree = self.rotationDegree( x2, y2,right[0] ,right[1] )
                 degree = degree if i==1 else degree*-1 # 왼손 오른손 구분
-                rotation_matrix = cv2.getRotationMatrix2D((num_cols/2-20,num_rows/2-20),degree , 1)
+                rotation_matrix = cv2.getRotationMatrix2D((num_cols/2-25,num_rows/2-40),degree , 1) if i==1 else cv2.getRotationMatrix2D((num_cols/2+30,num_rows/2-30),degree , 1)
                 imgRotation = cv2.warpAffine(armArray[i], rotation_matrix , (num_cols, num_rows))
                 armArray[i] = imgRotation
 
@@ -192,7 +193,75 @@ class arm_overlayer:
             x_move = -60
             y_move = -20
 
-            rightInstance.setImage(frame,y2+y_move-20, x2-x_move-100)
-            leftInstance.setImage(frame,y2+y_move++3, x1+x_move-117)
+            rightInstance.setImage(frame,y2+y_move-28, x2-x_move-100)
+            leftInstance.setImage(frame,y2+y_move-33, x1+x_move-140)
             return frame
 
+class pants_overlayer:
+    img_array = listOfClothes()
+    isResize = False
+
+    def rotationDegree(self, x1, y1, x2, y2):
+
+        return (-math.atan((y2 - y1) / (x2 - x1)) * (180 / 3.141592))
+
+    def overlay(self, frame_detected, box_coordinate, p1,clothesIndex):
+
+        left,right = box_coordinate
+        left_leg = p1[2][0]  # 왼손좌표
+        right_right = p1[3][0]  # 오른손좌표
+
+        img = self.img_array.getClothes(clothesIndex[0], clothesIndex[1]) # 옷 폴더 이름 string 값
+
+        leftInstance =  BitwiseImage(cv2.imread("clothes/" + img + "/left.png")) # 입을 옷을 Bitewise 세팅
+        rightInstance = BitwiseImage(cv2.imread("clothes/" + img + "/right.png"))
+        bodyInstance = BitwiseImage(cv2.imread("clothes/" + img + "/body.png"))
+
+        leftToWear = leftInstance.img  # 입을 옷 이미지
+        rightToWear = rightInstance.img
+        bodyToWear = bodyInstance.img
+
+        armArray = [leftToWear,rightToWear, bodyToWear] # for 문 돌리기 위해서 list화
+
+        if box_coordinate is None :
+            return frame_detected
+        else :
+            frame = frame_detected
+            #print(pants)
+            x1 , y1 = box_coordinate[0]
+            x2 , y2 = box_coordinate[1]
+
+            for i in range(3) :
+                # 1.크기 설정
+                ratio = (x2 - x1)*6.5#4.3 기준
+                r = ratio / armArray[i].shape[1]
+                dim = (int(ratio), int(armArray[i].shape[0] * r))
+                resized = cv2.resize(armArray[i], dim, interpolation=cv2.INTER_AREA)
+                armArray[i] = resized
+
+                #회전
+                # if i != 2 :
+                #     num_rows, num_cols = armArray[i].shape[:2]
+                #     degree = self.rotationDegree( x2, y2,right[0] ,right[1] )
+                #     degree = degree if i==1 else degree*-1 # 왼손 오른손 구분
+                #     rotation_matrix = cv2.getRotationMatrix2D((num_cols/2-20,num_rows/2-20),degree , 1)
+                #     imgRotation = cv2.warpAffine(armArray[i], rotation_matrix , (num_cols, num_rows))
+                #     armArray[i] = imgRotation
+
+
+            leftInstance.img = armArray[0]
+            rightInstance.img = armArray[1]
+            bodyInstance.img = armArray[2]
+
+            cv2.imshow("left2", armArray[0])
+            cv2.imshow("right2",armArray[1])
+            #cv2.imshow("body2",bodyInstance.img)
+            # 2. y축 위치 설정
+            x_move = 0
+            y_move = +190
+
+            bodyInstance.setImage( frame,right[0]+90, right[1]-170 )
+            rightInstance.setImage(frame,right[0]+230, right[1]-140)
+            leftInstance.setImage(frame,right[0]+230, right[1]-200)
+
+            return frame
