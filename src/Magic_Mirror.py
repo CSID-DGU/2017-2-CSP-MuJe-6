@@ -30,7 +30,7 @@ def checkHandPosition(y,x):
 
 def main():
 
-    cap = cv2.VideoCapture('video_2.mp4')
+    cap = cv2.VideoCapture('video_3.mp4')
     #cap = cv2.VideoCapture(0)
 
     # Random colors

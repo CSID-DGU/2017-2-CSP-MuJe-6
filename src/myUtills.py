@@ -86,7 +86,7 @@ class detector:
 class listOfClothes :
 
     def __init__(self):
-        self.array = [["blue","pink","green_pants"],["blue_pants1","blue_pants2","blue_pants3"]] #옷 폴더 이름
+        self.array = [["blue","pink","jean"],["green_pants","blue_pants2","blue_pants3"]] #옷 폴더 이름
         self.whatClothes = [[0,0,1]]
 
     def getClothes (self,i,j) :
@@ -178,11 +178,12 @@ class arm_overlayer:
 
                 #회전
                 num_rows, num_cols = armArray[i].shape[:2]
-                degree = self.rotationDegree( x2, y2,right[0] ,right[1] )
+                degree = self.rotationDegree( x2, y2,right[0] ,right[1] ) #
                 degree = degree if i==1 else degree*-1 # 왼손 오른손 구분
                 rotation_matrix = cv2.getRotationMatrix2D((num_cols/2-25,num_rows/2-40),degree , 1) if i==1 else cv2.getRotationMatrix2D((num_cols/2+30,num_rows/2-30),degree , 1)
                 imgRotation = cv2.warpAffine(armArray[i], rotation_matrix , (num_cols, num_rows))
                 armArray[i] = imgRotation
+                print("Arm ratation degree:", degree)
 
 
             leftInstance.img = armArray[0]
@@ -203,7 +204,7 @@ class pants_overlayer:
 
     def rotationDegree(self, x1, y1, x2, y2):
 
-        return (-math.atan((y2 - y1) / (x2 - x1)) * (180 / 3.141592))
+        return (-math.atan((y2 - y1) / (x2 - x1)) * (180 / 3.141592) +90) #팔각도에서 -90
 
     def overlay(self, frame_detected, box_coordinate, p1,clothesIndex):
 
@@ -230,6 +231,8 @@ class pants_overlayer:
             #print(pants)
             x1 , y1 = box_coordinate[0]
             x2 , y2 = box_coordinate[1]
+            rotation_x1,rotation_y1 = (x1+x2)/2, y2+100 #회전 위한 좌상단 좌표
+            rotation_x2, rotation_y2 = p1[3][0]#회전 위한 우하단 좌표
 
             for i in range(3) :
                 # 1.크기 설정
@@ -240,13 +243,16 @@ class pants_overlayer:
                 armArray[i] = resized
 
                 #회전
-                # if i != 2 :
-                #     num_rows, num_cols = armArray[i].shape[:2]
-                #     degree = self.rotationDegree( x2, y2,right[0] ,right[1] )
-                #     degree = degree if i==1 else degree*-1 # 왼손 오른손 구분
-                #     rotation_matrix = cv2.getRotationMatrix2D((num_cols/2-20,num_rows/2-20),degree , 1)
-                #     imgRotation = cv2.warpAffine(armArray[i], rotation_matrix , (num_cols, num_rows))
-                #     armArray[i] = imgRotation
+                if i != 2 :
+                    num_rows, num_cols = armArray[i].shape[:2]
+                    degree = self.rotationDegree( rotation_x1, rotation_y1,rotation_x2 , rotation_y2 )
+                    degree = degree if i==1 else degree*-1 # 왼손 오른손 구분
+                    rotation_matrix = cv2.getRotationMatrix2D((num_cols/2-20,num_rows/2-20),degree , 1)
+                    imgRotation = cv2.warpAffine(armArray[i], rotation_matrix , (num_cols, num_rows))
+                    armArray[i] = imgRotation
+
+                    print("rotation param:", rotation_x1,rotation_x2,rotation_x2,rotation_y2)
+                    print("pants degree : ",degree)
 
 
             leftInstance.img = armArray[0]
@@ -260,8 +266,9 @@ class pants_overlayer:
             x_move = 0
             y_move = +190
 
-            bodyInstance.setImage( frame,right[0]+90, right[1]-170 )
-            rightInstance.setImage(frame,right[0]+230, right[1]-140)
-            leftInstance.setImage(frame,right[0]+230, right[1]-200)
+
+            rightInstance.setImage(frame,right[0]+240, right[1]-125)
+            leftInstance.setImage(frame,right[0]+230, right[1]-220)
+            bodyInstance.setImage(frame, right[0] + 90, right[1] - 170)
 
             return frame
