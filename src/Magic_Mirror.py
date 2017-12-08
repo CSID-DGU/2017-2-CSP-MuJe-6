@@ -10,28 +10,29 @@ def draw_text(frame, text, x, y, color=(255, 255, 255), thickness=20, size=5):
             frame, text, (int(x), int(y)), cv2.FONT_HERSHEY_SIMPLEX, size, color, thickness)
 
 def checkHandPosition(y,x):
-    if (x>552 and x<687):
-        if (y>131 and y<217):
-            print("위쪽 화살표 클릭")
-            return 0
-        elif (y>247 and y<364):
-            print("첫번째 상자 클릭")
-            return 1
-        elif (y>394 and y<511):
-            print("두번째 상자 클릭")
-            return 2
-        elif (y>541 and y<658):
-            print("세번째 상자 클릭")
-            return 3
-        elif (y>688 and y<774):
-            print("아래쪽 화살표 클릭")
-            return 4
-        return 100
+    if (x>500 and x<687):
+        return 3
+        # if (y>131 and y<217):
+        #     print("위쪽 화살표 클릭")
+        #     return 0
+        # elif (y>247 and y<364):
+        #     print("첫번째 상자 클릭")
+        #     return 1
+        # elif (y>394 and y<511):
+        #     print("두번째 상자 클릭")
+        #     return 2
+        # elif (y>541 and y<658):
+        #     print("세번째 상자 클릭")
+        #     return 3
+        # elif (y>688 and y<774):
+        #     print("아래쪽 화살표 클릭")
+        #     return 4
+        # return 100
 
 def main():
 
-    cap = cv2.VideoCapture('video_3.mp4')
-    #cap = cv2.VideoCapture(0)
+    #cap = cv2.VideoCapture('video_2.mp4')
+    cap = cv2.VideoCapture(1)
 
     # Random colors
     color = np.random.randint(0,255,(100,3))
@@ -40,17 +41,17 @@ def main():
 
         init_time = time.time()
 
-        counter = 2  # 화면에 띄울 숫자
+        counter = 10  # 화면에 띄울 숫자
         end_time = init_time + counter + 1  # 타이머 끝나는 시간
         secondPassed = init_time + 1  # 1초가 지났는지 안지났는지 비교하는용
 
         timer_over = False  # 타이머 끝났는지 확인용
 
-        #video_2용
-        left_hand = (200, 610)
-        right_hand = (500, 610)
-        left_foot = (283, 940)
-        right_foot = (420, 950)
+        #웹캠용
+        left_hand = (200, 260)
+        right_hand = (440, 260)
+        left_foot = (260, 465)
+        right_foot = (380, 465)
 
         # #video_3용
         # left_hand = (312, 610)
@@ -72,8 +73,8 @@ def main():
             frame = cv2.circle(frame, right_foot, 5, dot_color.tolist(), -1)
 
             if ret == True:
-                center_x = int(frame.shape[1] / 2.2)
-                center_y = int(frame.shape[0] / 6)
+                center_x = int(frame.shape[1] / 20)
+                center_y = int(frame.shape[0] / 3.8)
 
                 if (time.time() < end_time):
                     draw_text(frame, str(counter), center_x, center_y)
@@ -81,7 +82,7 @@ def main():
                     counter -= 1
                     secondPassed += 1
 
-                frame = cv2.resize(frame, (360, 640))  # Resize image
+                #frame = cv2.resize(frame, (360, 640))  # Resize image
                 cv2.imshow('frame', frame)
                 if (cv2.waitKey(1) & 0xFF == ord('q')) or (time.time() > end_time):
                     timer_over = True
@@ -96,8 +97,8 @@ def main():
                            criteria = (cv2.TERM_CRITERIA_EPS | cv2.TERM_CRITERIA_COUNT, 10, 0.03))
 
         ##Background UI 삽입
-        back_img = cv2.imread('back_img.png')
-        #back_img = cv2.resize(back_img, (720, 1280))
+        back_img = cv2.imread('back_imgg.png')
+        # back_img = cv2.resize(back_img, (640, 480))
         backgroundUI = myUtills.BitwiseImage(back_img)
 
         # Take first frame and find corners in it
@@ -114,6 +115,7 @@ def main():
         # body detector and overlayer
 
         body_detector = myUtills.detector()
+
         clothes_overlayer = myUtills.overlayer()
         right_overlayer = myUtills.arm_overlayer()
         pants_overlayer = myUtills.pants_overlayer()
@@ -122,7 +124,7 @@ def main():
         countframe = 0
 
         # clothes managing
-        clothesIndex = []  # 더미변수 (checkPosition 에서 받을 예정)
+        clothesIndex = [0,1]  # 더미변수 (checkPosition 에서 받을 예정)
         top = []
         pants = []
 
@@ -168,10 +170,10 @@ def main():
                 realframe = body_detector.detect_body2(realframe)
                 box_coordinate = body_detector.box_coordinate
 
-                # 3. check hand position and run action
-
+                # 3. check hand position and run actiom
                 leftPosition = checkHandPosition(p1[0][0][1], p1[0][0][0])  # 왼손 위치 체크
                 rightPosition = checkHandPosition(p1[1][0][1], p1[1][0][0])  # 오른손 위치 체크
+                print("right hand position : ", rightPosition )
 
                 clothesArrayIdx = 0
 
@@ -219,6 +221,7 @@ def main():
                     if len(pants) != 0 :
                         realframe = pants_overlayer.overlay(realframe, box_coordinate, p1, pants)
 
+
                     if len(top) != 0 :
                         realframe = right_overlayer.overlay(realframe, box_coordinate, p1,top)  # 프레임, 얼굴좌표, (왼좌표. 오른좌표)
                         realframe = clothes_overlayer.overlay(realframe, box_coordinate, top)
@@ -232,11 +235,9 @@ def main():
 
                 if (st.all() == 1): # st == 1 이면 프레임 안
                     img = cv2.add(realframe, mask)
-                else: # 프레임 밖으로 벗어난 경우
-                    img = realframe
-                    #break
 
-                img = cv2.resize(img, (360, 640))  # Resize image
+
+                #img = cv2.resize(img, (360, 640))  # Resize image
                 cv2.imshow('frame', img)
 
                 # 카메라 종료

@@ -1,5 +1,6 @@
 import cv2
 import math
+import numpy as np
 
 class BitwiseImage:
     def __init__(self, img):
@@ -86,11 +87,13 @@ class detector:
 class listOfClothes :
 
     def __init__(self):
-        self.array = [["blue","pink","jean"],["green_pants","blue_pants2","blue_pants3"]] #옷 폴더 이름
+        self.array = [["blue","purple","green_pants"],["green_pants","jean","blue_pants3"]] #옷 폴더 이름
         self.whatClothes = [[0,0,1]]
 
     def getClothes (self,i,j) :
         return self.array[i][j]
+
+resizing_coef = 5.5
 
 class overlayer:
     isResize = False
@@ -119,8 +122,7 @@ class overlayer:
                 #if (not self.isResize):
                 # 1.크기 설정
                 #if not self.isResize :
-                ratio = math.ceil(x2 - x1)*6 #4.3 기준
-                ratio = 312
+                ratio = math.ceil(x2 - x1)*resizing_coef #옷사이즈
                 r = ratio / clothesToWear.img.shape[1]
                 dim = (int(ratio), int(clothesToWear.img.shape[0] * r))
                 resized = cv2.resize(clothesToWear.img, dim, interpolation=cv2.INTER_AREA)
@@ -130,13 +132,14 @@ class overlayer:
                 self.isResize = True
 
                 # 2. y축 위치 설정
-                x_move = -120
+                x_move = -80
                 y_move = int((y2 - y1))-20
 
                 # 사람이 감지되었다고 가정
                 cv2.imshow("body",clothesToWear.img)
                 clothesToWear.setImage(frame,y1+y_move, x1+x_move)
                 return frame
+
 class arm_overlayer:
     img_array = listOfClothes()
     isResize = False
@@ -159,18 +162,21 @@ class arm_overlayer:
         rightToWear = rightInstance.img
         armArray = [leftToWear,rightToWear] # for 문 돌리기 위해서 list화
 
-        if box_coordinate is None :
+        print("this is bc : ", box_coordinate)
+        if box_coordinate == 0 :
             return frame_detected
-        else :
+        elif box_coordinate != 0 :
+            print(box_coordinate , "in else ")
             frame = frame_detected
             #(box_coordinate)
+            print("this is box:        ",box_coordinate)
             x1 , y1 = box_coordinate[0]
             x2 , y2 = box_coordinate[1]
 
             for i in range(2) :
                 #if (not self.isResize):
                 # 1.크기 설정
-                ratio = (x2 - x1)*5 #4.3 기준
+                ratio = (x2 - x1)*resizing_coef #옷사이즈
                 r = ratio / armArray[i].shape[1]
                 dim = (int(ratio), int(armArray[i].shape[0] * r))
                 resized = cv2.resize(armArray[i], dim, interpolation=cv2.INTER_AREA)
@@ -178,24 +184,24 @@ class arm_overlayer:
 
                 #회전
                 num_rows, num_cols = armArray[i].shape[:2]
-                degree = self.rotationDegree( x2, y2,right[0] ,right[1] ) #
+                degree = self.rotationDegree( x2, y2,right[0] ,right[1] ) if i==1 else (self.rotationDegree( x2, y2,left[0] ,left[1] )*-1)
                 degree = degree if i==1 else degree*-1 # 왼손 오른손 구분
                 rotation_matrix = cv2.getRotationMatrix2D((num_cols/2-25,num_rows/2-40),degree , 1) if i==1 else cv2.getRotationMatrix2D((num_cols/2+30,num_rows/2-30),degree , 1)
                 imgRotation = cv2.warpAffine(armArray[i], rotation_matrix , (num_cols, num_rows))
                 armArray[i] = imgRotation
                 print("Arm ratation degree:", degree)
 
-
-            leftInstance.img = armArray[0]
-            rightInstance.img = armArray[1]
-            cv2.imshow("left", leftInstance.img)
-            cv2.imshow("right",rightInstance.img)
+            kernel = np.ones((5, 5), np.float32) / 25
+            leftInstance.img = cv2.filter2D(armArray[0], -1, kernel)  # bluring
+            rightInstance.img = cv2.filter2D(armArray[1], -1, kernel)
+            #cv2.imshow("left", leftInstance.img)
+            #cv2.imshow("right",rightInstance.img)
             # 2. y축 위치 설정
-            x_move = -60
-            y_move = -20
+            x_move = -40
+            y_move = -40
 
-            rightInstance.setImage(frame,y2+y_move-28, x2-x_move-100)
-            leftInstance.setImage(frame,y2+y_move-33, x1+x_move-140)
+            rightInstance.setImage(frame,y2+y_move+10, x2-x_move-80)
+            leftInstance.setImage(frame,y2+y_move, x1+x_move-120)
             return frame
 
 class pants_overlayer:
@@ -236,7 +242,7 @@ class pants_overlayer:
 
             for i in range(3) :
                 # 1.크기 설정
-                ratio = (x2 - x1)*6.5#4.3 기준
+                ratio = (x2 - x1)*5.5
                 r = ratio / armArray[i].shape[1]
                 dim = (int(ratio), int(armArray[i].shape[0] * r))
                 resized = cv2.resize(armArray[i], dim, interpolation=cv2.INTER_AREA)
@@ -254,21 +260,22 @@ class pants_overlayer:
                     print("rotation param:", rotation_x1,rotation_x2,rotation_x2,rotation_y2)
                     print("pants degree : ",degree)
 
-
-            leftInstance.img = armArray[0]
-            rightInstance.img = armArray[1]
+            kernel = np.ones((5, 5), np.float32) / 25
+            leftInstance.img = cv2.filter2D(armArray[0],-1,kernel) #bluring
+            rightInstance.img = cv2.filter2D(armArray[1],-1,kernel)
             bodyInstance.img = armArray[2]
 
             cv2.imshow("left2", armArray[0])
             cv2.imshow("right2",armArray[1])
             #cv2.imshow("body2",bodyInstance.img)
             # 2. y축 위치 설정
-            x_move = 0
-            y_move = +190
+            x_move = -90
+            y_move = 90
+            leg_move = 140
 
-
-            rightInstance.setImage(frame,right[0]+240, right[1]-125)
-            leftInstance.setImage(frame,right[0]+230, right[1]-220)
-            bodyInstance.setImage(frame, right[0] + 90, right[1] - 170)
+            #바지위치
+            rightInstance.setImage(frame,right[1]+y_move+leg_move, right[0]+x_move)
+            leftInstance.setImage(frame,right[1]+y_move+leg_move, right[0]+x_move-30)
+            bodyInstance.setImage(frame, right[1]+y_move, right[0]+x_move-30)
 
             return frame
