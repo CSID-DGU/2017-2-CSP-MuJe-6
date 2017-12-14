@@ -10,24 +10,24 @@ def draw_text(frame, text, x, y, color=(255, 255, 255), thickness=20, size=5):
             frame, text, (int(x), int(y)), cv2.FONT_HERSHEY_SIMPLEX, size, color, thickness)
 
 def checkHandPosition(y,x):
-    if (x>500 and x<687):
-        return 3
-        # if (y>131 and y<217):
-        #     print("위쪽 화살표 클릭")
-        #     return 0
-        # elif (y>247 and y<364):
-        #     print("첫번째 상자 클릭")
-        #     return 1
-        # elif (y>394 and y<511):
-        #     print("두번째 상자 클릭")
-        #     return 2
-        # elif (y>541 and y<658):
-        #     print("세번째 상자 클릭")
-        #     return 3
-        # elif (y>688 and y<774):
-        #     print("아래쪽 화살표 클릭")
-        #     return 4
-        # return 100
+    if (x>480 and x<548):
+        print("x범위 입니다. ")
+        if (y>86 and y<110):
+            print("위쪽 화살표 클릭")
+            return 0
+        elif (y>122 and y<162):
+            print("첫번째 상자 클릭")
+            return 1
+        elif (y>174 and y<214):
+            print("두번째 상자 클릭")
+            return 2
+        elif (y>226 and y<266):
+            print("세번째 상자 클릭")
+            return 3
+        elif (y>278 and y<302):
+            print("아래쪽 화살표 클릭")
+            return 4
+        return 100
 
 def main():
 
@@ -37,11 +37,18 @@ def main():
     # Random colors
     color = np.random.randint(0,255,(100,3))
 
+    # Button check array
+    btnCheckArray = [100, 100, 100]
+    btnIdx = 0  # 배열에 들어갈 위치를 정하는 인덱스
+
+    # backUI변화를 체크해 옷이 몇번째 배열에 있는지 확인
+    clothesArrayIdx = 0;
+
     while(True):
 
         init_time = time.time()
 
-        counter = 10  # 화면에 띄울 숫자
+        counter = 12  # 화면에 띄울 숫자
         end_time = init_time + counter + 1  # 타이머 끝나는 시간
         secondPassed = init_time + 1  # 1초가 지났는지 안지났는지 비교하는용
 
@@ -97,7 +104,7 @@ def main():
                            criteria = (cv2.TERM_CRITERIA_EPS | cv2.TERM_CRITERIA_COUNT, 10, 0.03))
 
         ##Background UI 삽입
-        back_img = cv2.imread('back_imgg.png')
+        back_img = cv2.imread('back_img.png')
         # back_img = cv2.resize(back_img, (640, 480))
         backgroundUI = myUtills.BitwiseImage(back_img)
 
@@ -133,9 +140,9 @@ def main():
         # 오버레이 루프
         while(True):
             countframe += 1
-            if (countframe > 100000):
+            if (countframe > 3):
                 countframe = 0
-            if (countframe % 5000 == 0):
+            if (countframe>=0):
                 # 1. optical flow
                 ret, realframe = cap.read()
                 realframe = cv2.flip(realframe, 1)  # 좌우반전
@@ -170,40 +177,49 @@ def main():
                 realframe = body_detector.detect_body2(realframe)
                 box_coordinate = body_detector.box_coordinate
 
-                # 3. check hand position and run actiom
-                leftPosition = checkHandPosition(p1[0][0][1], p1[0][0][0])  # 왼손 위치 체크
-                rightPosition = checkHandPosition(p1[1][0][1], p1[1][0][0])  # 오른손 위치 체크
-                print("right hand position : ", rightPosition )
+                # 3. check hand position and run action
+                print(countframe)
+                btnCheckIdx = 0  # 배열의 원소 세개가 모두 같은지 확인하는 변수
+                if (countframe == 0):  # 3초 정도의 delay
+                    print("아아")
+                    # leftPosition = checkHandPosition(p1[0][0][1], p1[0][0][0])  # 왼손 위치 체크
+                    rightPosition = checkHandPosition(p1[1][0][1], p1[1][0][0])  # 오른손 위치 체크
+                    btnCheckArray[btnIdx % 3] = rightPosition  # 배열에 손위치값 담음
+                    btnIdx += 1
+                    for i, item in enumerate(btnCheckArray):  # 배열 원소 세개가 모두 같은지 확인
+                        if (btnCheckArray[i] == btnCheckArray[2]):
+                            btnCheckIdx += 1
+                    if (btnCheckIdx == 3):  # 배열의 원소 세개가 모두 같으면
+                        print("들어옴")
+                        if (rightPosition == 0):
+                            # 위쪽 화살표 클릭
+                            if (not clothesArrayIdx == 0):  # 0인 경우는 첫번째 배열이므로 더이상 위쪽으로 넘어갈 수 없음
+                                clothesArrayIdx -= 1
+                                # backgroundUI = myUtills.BitwiseImage(cv2.imread('back_img2.png'))
+                        elif (rightPosition == 1):
+                            # 첫번째 아이템 클릭
+                            clothesIndex = [clothesArrayIdx, 0]
+                        elif (rightPosition == 2):
+                            # 두번째 아이템 클릭
+                            print("clothesIndex[0 ]" ,clothesIndex[0],"clothesIndex[1 ]" ,clothesIndex[1])
+                            clothesIndex = [clothesArrayIdx, 1]
+                        elif (rightPosition == 3):
+                            # 세번째 아이템 클릭
+                            clothesIndex = [clothesArrayIdx, 2]
+                        elif (rightPosition == 4):
+                            # 아래쪽 화살표 클릭
+                            if (clothesArrayIdx < 2):  # 배열 크기가 1이므로 그 이상은 배열이 없으므로 더이상 아래로 내려갈 수 없음
+                                clothesArrayIdx = 1
+                                print("화살표클릭!! array index는", clothesArrayIdx)
+                                backgroundUI = myUtills.BitwiseImage(cv2.imread('back_img2.png'))
 
-                clothesArrayIdx = 0
-
-                if (leftPosition == 0 or rightPosition == 0):
-                    # 위쪽 화살표 클릭
-                    if (not clothesArrayIdx == 0):  # 0인 경우는 첫번째 배열이므로 더이상 위쪽으로 넘어갈 수 없음
-                        clothesArrayIdx -= 1
-                        backgroundUI = myUtills.BitwiseImage(cv2.imread('back_img2.png'))
-                elif (leftPosition == 1 or rightPosition == 1):
-                    # 첫번째 아이템 클릭
-                    clothesIndex = [clothesArrayIdx, 0]
-                elif (leftPosition == 2 or rightPosition == 2):
-                    # 두번째 아이템 클릭
-                    clothesIndex = [clothesArrayIdx, 1]
-                elif (leftPosition == 3 or rightPosition == 3):
-                    # 세번째 아이템 클릭
-                    clothesIndex = [clothesArrayIdx, 2]
-                elif (leftPosition == 4 or rightPosition == 4):
-                    # 아래쪽 화살표 클릭
-                    if (clothesArrayIdx < 2):  # 배열 크기가 1이므로 그 이상은 배열이 없으므로 더이상 아래로 내려갈 수 없음
-                        clothesArrayIdx += 1
-                        clothesIndex[0] = clothesArrayIdx
-                        backgroundUI = myUtills.BitwiseImage(cv2.imread('back_img3.png'))
 
                 # 4.overlay clothes
 
-                print("left_h:",p1[0][0])
-                print("right_h:",p1[1][0])
-                print("left_f:", p1[2][0])
-                print("right_f:", p1[3][0])
+                # print("left_h:",p1[0][0])
+                # print("right_h:",p1[1][0])
+                # print("left_f:", p1[2][0])
+                # print("right_f:", p1[3][0])
 
 
 

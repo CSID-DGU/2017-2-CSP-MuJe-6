@@ -87,8 +87,8 @@ class detector:
 class listOfClothes :
 
     def __init__(self):
-        self.array = [["blue","purple","green_pants"],["green_pants","jean","blue_pants3"]] #옷 폴더 이름
-        self.whatClothes = [[0,0,1]]
+        self.array = [["blue","pink","jean"],["no","purple","green_pants"]] #옷 폴더 이름
+        self.whatClothes = [[0,0,1],[0,0,1]]
 
     def getClothes (self,i,j) :
         return self.array[i][j]
@@ -133,7 +133,7 @@ class overlayer:
 
                 # 2. y축 위치 설정
                 x_move = -80
-                y_move = int((y2 - y1))-20
+                y_move = int((y2 - y1))
 
                 # 사람이 감지되었다고 가정
                 cv2.imshow("body",clothesToWear.img)
@@ -189,18 +189,18 @@ class arm_overlayer:
                 rotation_matrix = cv2.getRotationMatrix2D((num_cols/2-25,num_rows/2-40),degree , 1) if i==1 else cv2.getRotationMatrix2D((num_cols/2+30,num_rows/2-30),degree , 1)
                 imgRotation = cv2.warpAffine(armArray[i], rotation_matrix , (num_cols, num_rows))
                 armArray[i] = imgRotation
-                print("Arm ratation degree:", degree)
+               # print("Arm ratation degree:", degree)
 
             kernel = np.ones((5, 5), np.float32) / 25
-            leftInstance.img = cv2.filter2D(armArray[0], -1, kernel)  # bluring
-            rightInstance.img = cv2.filter2D(armArray[1], -1, kernel)
+            leftInstance.img = armArray[0]
+            rightInstance.img = armArray[1]
             #cv2.imshow("left", leftInstance.img)
             #cv2.imshow("right",rightInstance.img)
             # 2. y축 위치 설정
             x_move = -40
             y_move = -40
 
-            rightInstance.setImage(frame,y2+y_move+10, x2-x_move-80)
+            rightInstance.setImage(frame,y2+y_move+17, x2-x_move-60)
             leftInstance.setImage(frame,y2+y_move, x1+x_move-120)
             return frame
 
@@ -237,12 +237,13 @@ class pants_overlayer:
             #print(pants)
             x1 , y1 = box_coordinate[0]
             x2 , y2 = box_coordinate[1]
-            rotation_x1,rotation_y1 = (x1+x2)/2, y2+100 #회전 위한 좌상단 좌표
+            rotation_x1,rotation_y1 = (x1+x2)/2, y2+50 #회전 위한 좌상단 좌표
             rotation_x2, rotation_y2 = p1[3][0]#회전 위한 우하단 좌표
+            rotation_x3, rotation_y3 = p1[2][0]
 
             for i in range(3) :
                 # 1.크기 설정
-                ratio = (x2 - x1)*5.5
+                ratio = (x2 - x1)*6
                 r = ratio / armArray[i].shape[1]
                 dim = (int(ratio), int(armArray[i].shape[0] * r))
                 resized = cv2.resize(armArray[i], dim, interpolation=cv2.INTER_AREA)
@@ -251,7 +252,7 @@ class pants_overlayer:
                 #회전
                 if i != 2 :
                     num_rows, num_cols = armArray[i].shape[:2]
-                    degree = self.rotationDegree( rotation_x1, rotation_y1,rotation_x2 , rotation_y2 )
+                    degree = self.rotationDegree( rotation_x1, rotation_y1,rotation_x2 , rotation_y2 ) if i==1 else -1*self.rotationDegree( rotation_x1, rotation_y1,rotation_x3 , rotation_y3 )+180
                     degree = degree if i==1 else degree*-1 # 왼손 오른손 구분
                     rotation_matrix = cv2.getRotationMatrix2D((num_cols/2-20,num_rows/2-20),degree , 1)
                     imgRotation = cv2.warpAffine(armArray[i], rotation_matrix , (num_cols, num_rows))
@@ -261,21 +262,21 @@ class pants_overlayer:
                     print("pants degree : ",degree)
 
             kernel = np.ones((5, 5), np.float32) / 25
-            leftInstance.img = cv2.filter2D(armArray[0],-1,kernel) #bluring
-            rightInstance.img = cv2.filter2D(armArray[1],-1,kernel)
+            leftInstance.img = armArray[0]
+            rightInstance.img =armArray[1]
             bodyInstance.img = armArray[2]
 
             cv2.imshow("left2", armArray[0])
             cv2.imshow("right2",armArray[1])
             #cv2.imshow("body2",bodyInstance.img)
             # 2. y축 위치 설정
-            x_move = -90
+            x_move = -94
             y_move = 90
-            leg_move = 140
+            leg_move = 110
 
             #바지위치
             rightInstance.setImage(frame,right[1]+y_move+leg_move, right[0]+x_move)
-            leftInstance.setImage(frame,right[1]+y_move+leg_move, right[0]+x_move-30)
+            leftInstance.setImage(frame,right[1]+y_move+leg_move, right[0]+x_move-60)
             bodyInstance.setImage(frame, right[1]+y_move, right[0]+x_move-30)
 
             return frame
