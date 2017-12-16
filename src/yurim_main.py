@@ -3,7 +3,7 @@ import numpy as np
 import time
 import random
 from src import myUtills
-import os
+import threading
 
 def draw_text(frame, text, x, y, color=(255, 255, 255), thickness=20, size=5):
     if x is not None and y is not None:
@@ -11,31 +11,28 @@ def draw_text(frame, text, x, y, color=(255, 255, 255), thickness=20, size=5):
             frame, text, (int(x), int(y)), cv2.FONT_HERSHEY_SIMPLEX, size, color, thickness)
 
 def checkHandPosition(y,x):
-    if (x>480 and x<548):
-        print("x범위 입니다. ")
-        if (y>86 and y<110):
+    if (x>552 and x<687):
+        if (y>131 and y<217):
             print("위쪽 화살표 클릭")
             return 0
-        elif (y>122 and y<162):
+        elif (y>247 and y<364):
             print("첫번째 상자 클릭")
             return 1
-        elif (y>174 and y<214):
+        elif (y>394 and y<511):
             print("두번째 상자 클릭")
             return 2
-        elif (y>226 and y<266):
+        elif (y>541 and y<658):
             print("세번째 상자 클릭")
             return 3
-        elif (y>278 and y<302):
+        elif (y>688 and y<774):
             print("아래쪽 화살표 클릭")
             return 4
-        return 100
+    return 100
 
 def main():
 
-    print(os.getcwd())
-
     #cap = cv2.VideoCapture('video_2.mp4')
-    cap = cv2.VideoCapture(1)
+    cap = cv2.VideoCapture(0)
 
     # Random colors
     color = np.random.randint(0,255,(100,3))
@@ -57,34 +54,22 @@ def main():
 
         timer_over = False  # 타이머 끝났는지 확인용
 
-        #웹캠용
-        left_hand = (200, 260)
-        right_hand = (440, 260)
-        left_foot = (260, 465)
-        right_foot = (380, 465)
-
-        # #video_3용
-        # left_hand = (312, 610)
-        # right_hand = (600, 430)
-        # left_foot = (390, 940)
-        # right_foot = (620, 950)
-
-
+        left_hand = (250, 100)
+        right_hand = (480, 100)
+        # left_arm = (220, 300)
+        # right_arm = (480,300)
 
         while(cap.isOpened()):
             ret, frame = cap.read()
-            print(frame.shape)
 
             dot_color = random.choice(color)
             frame = cv2.flip(frame, 1)  # 좌우반전
             frame = cv2.circle(frame, left_hand, 5, dot_color.tolist(), -1)
             frame = cv2.circle(frame, right_hand, 5, dot_color.tolist(), -1)
-            frame = cv2.circle(frame, left_foot, 5, dot_color.tolist(), -1)
-            frame = cv2.circle(frame, right_foot, 5, dot_color.tolist(), -1)
 
             if ret == True:
-                center_x = int(frame.shape[1] / 20)
-                center_y = int(frame.shape[0] / 3.8)
+                center_x = int(frame.shape[1] / 2.5)
+                center_y = int(frame.shape[0] / 2)
 
                 if (time.time() < end_time):
                     draw_text(frame, str(counter), center_x, center_y)
@@ -92,6 +77,7 @@ def main():
                     counter -= 1
                     secondPassed += 1
 
+                #frame = cv2.resize(frame, (360, 640))  # Resize image
                 #frame = cv2.resize(frame, (360, 640))  # Resize image
                 cv2.imshow('frame', frame)
                 if (cv2.waitKey(1) & 0xFF == ord('q')) or (time.time() > end_time):
@@ -107,8 +93,8 @@ def main():
                            criteria = (cv2.TERM_CRITERIA_EPS | cv2.TERM_CRITERIA_COUNT, 10, 0.03))
 
         ##Background UI 삽입
-        back_img = cv2.imread('back_img0.png')
-        # back_img = cv2.resize(back_img, (640, 480))
+        back_img = cv2.imread('back_img.png')
+        #back_img = cv2.resize(back_img, (720, 1280))
         backgroundUI = myUtills.BitwiseImage(back_img)
 
         # Take first frame and find corners in it
@@ -116,7 +102,9 @@ def main():
         old_gray = cv2.cvtColor(old_frame, cv2.COLOR_BGR2GRAY)
 
         # Set tracking points
-        p0 = np.array([ [list(left_hand)], [list(right_hand)],[list(left_foot)],[list(right_foot)]]) #tracking하는 포인트 위치와 개수 설정
+        p0 = np.array([[list(left_hand)], [list(right_hand)]]) #tracking하는 포인트 위치와 개수 설정
+        print("p0 초기 설정 위치")
+        print(p0)
         p0 = np.float32(p0)
 
         # Create a mask image for drawing purposes
@@ -125,31 +113,21 @@ def main():
         # body detector and overlayer
 
         body_detector = myUtills.detector()
-
         clothes_overlayer = myUtills.overlayer()
         right_overlayer = myUtills.arm_overlayer()
-        pants_overlayer = myUtills.pants_overlayer()
-        kindOfClothes = myUtills.listOfClothes().whatClothes
 
         countframe = 0
 
-        # clothes managing
-        clothesIndex = [0,1]  # 더미변수 (checkPosition 에서 받을 예정)
-        top = []
-        pants = []
-
-
-
+        clothesIndex = [0, 1]  # 더미변수 (checkPosition 에서 받을 예정)
         # 오버레이 루프
         while(True):
             countframe += 1
-            if (countframe > 20):
+            if (countframe > 100000):
                 countframe = 0
-            if (countframe>=0):
+            if (countframe >= 0):
                 # 1. optical flow
                 ret, realframe = cap.read()
                 realframe = cv2.flip(realframe, 1)  # 좌우반전
-
 
                 frame_gray = cv2.cvtColor(realframe, cv2.COLOR_BGR2GRAY)
 
@@ -158,18 +136,22 @@ def main():
                 # Select good points
                 good_new = p1[st == 1]
                 good_old = p0[st == 1]
-
-                if (st.all() == 1):
+                print("p1 좌표는")
+                print(p1)
+                print("p0 좌표는")
+                print(p0)
+                print("st 값은")
+                print(st)
+                if (st.all() == 1):   # optical flow의 좌표를 가져와서 프레임 안에 있을 때만 돌아가게 하기
 
                     # draw the tracks
                     for i, (new, old) in enumerate(zip(good_new, good_old)):
                         a, b = new.ravel()  # 현재 프레임의 좌표값
                         c, d = old.ravel()  # 이전 프레임의 좌표값
                         #checkHandPosition(a,b)
-                        print("트레킹 위치 :", a,b)
-                        #mask = cv2.line(mask, (a, b), (c, d), color[i].tolist(), 2)  # 현재와 이전의 프레임을 이어줌
+                        #print(a,b)
+                        mask = cv2.line(mask, (a, b), (c, d), color[i].tolist(), 2)  # 현재와 이전의 프레임을 이어줌
                         realframe = cv2.circle(realframe, (a, b), 5, color[i].tolist(), -1)
-
 
 
                     # Now update the previous frame and previous points
@@ -178,88 +160,59 @@ def main():
 
                 # 2.detect body
 
-                #realframe = body_detector.detect_body2(realframe)
-                #box_coordinate = body_detector.box_coordinate
+                realframe = body_detector.detect_body2(realframe)
+                box_coordinate = body_detector.box_coordinate
 
                 # 3. check hand position and run action
-                print(countframe)
+
                 btnCheckIdx = 0  # 배열의 원소 세개가 모두 같은지 확인하는 변수
-                if (countframe == 0):  # 3초 정도의 delay
-                    print("아아")
-                    # leftPosition = checkHandPosition(p1[0][0][1], p1[0][0][0])  # 왼손 위치 체크
+                if (countframe == 0): # 3초 정도의 delay
+                    print("손 위치를 확인해 볼까나")
+                    #leftPosition = checkHandPosition(p1[0][0][1], p1[0][0][0])  # 왼손 위치 체크
                     rightPosition = checkHandPosition(p1[1][0][1], p1[1][0][0])  # 오른손 위치 체크
-                    btnCheckArray[btnIdx % 3] = rightPosition  # 배열에 손위치값 담음
+                    btnCheckArray[btnIdx%3] = rightPosition #배열에 손위치값 담음
                     btnIdx += 1
-                    for i, item in enumerate(btnCheckArray):  # 배열 원소 세개가 모두 같은지 확인
+                    print("전 ")
+                    print(btnCheckIdx)
+                    for i, item in enumerate(btnCheckArray): #배열 원소 세개가 모두 같은지 확인
                         if (btnCheckArray[i] == btnCheckArray[2]):
                             btnCheckIdx += 1
-                    if (btnCheckIdx == 3):  # 배열의 원소 세개가 모두 같으면
-                        print("current arrayIndex!!!!!!!!!!", clothesArrayIdx)
+                    print("후 ")
+                    print(btnCheckIdx)
+                    if(btnCheckIdx == 3): #배열의 원소 세개가 모두 같으면
+                        print("배열 원소 세개가 같음!!꺅")
                         if (rightPosition == 0):
                             # 위쪽 화살표 클릭
-                            clothesArrayIdx = (clothesArrayIdx+2) % 3   # 가야되는 페이지
-                            backgroundUI = myUtills.BitwiseImage(cv2.imread('back_img' + str(clothesArrayIdx) + '.png'))
+                            print("위")
+                            if (not clothesArrayIdx == 0):  # 0인 경우는 첫번째 배열이므로 더이상 위쪽으로 넘어갈 수 없음
+                                clothesArrayIdx -= 1
+                                backgroundUI = myUtills.BitwiseImage(cv2.imread('back_img2.png'))
                         elif (rightPosition == 1):
                             # 첫번째 아이템 클릭
+                            print("첫")
                             clothesIndex = [clothesArrayIdx, 0]
                         elif (rightPosition == 2):
                             # 두번째 아이템 클릭
-                            print("clothesIndex[0 ]" ,clothesIndex[0],"clothesIndex[1 ]" ,clothesIndex[1])
                             clothesIndex = [clothesArrayIdx, 1]
                         elif (rightPosition == 3):
                             # 세번째 아이템 클릭
                             clothesIndex = [clothesArrayIdx, 2]
                         elif (rightPosition == 4):
                             # 아래쪽 화살표 클릭
-                            clothesArrayIdx = (clothesArrayIdx+1) % 3 #가야되는 페이지
-                            backgroundUI = myUtills.BitwiseImage(cv2.imread('back_img'+str(clothesArrayIdx)+'.png'))
-
-
-
+                            if (clothesArrayIdx < 2):  # 배열 크기가 1이므로 그 이상은 배열이 없으므로 더이상 아래로 내려갈 수 없음
+                                clothesArrayIdx += 1
+                                backgroundUI = myUtills.BitwiseImage(cv2.imread('back_img3.png'))
+                        else:
+                            print("100이다이노망")
 
                 # 4.overlay clothes
 
-                # print("left_h:",p1[0][0])
-                # print("right_h:",p1[1][0])
-                # print("left_f:", p1[2][0])
-                # print("right_f:", p1[3][0])
+                #print("left:",p1[0][0])
+                #print("right:",p1[1][0])
+                #realframe = right_overlayer.overlay(realframe, box_coordinate, p1, clothesIndex) #프레임, 얼굴좌표, (왼좌표. 오른좌표)
+                #realframe = clothes_overlayer.overlay(realframe, box_coordinate,clothesIndex)
+                #realframe = clothes_overlayer.changeClothes(realframe, box_coordinate)
 
-
-
-                # #### overlay part start #####
-                # if len(clothesIndex) != 0 :
-                #     print(clothesIndex)
-                #
-                #     # 상하의 구분
-                #     if kindOfClothes[clothesIndex[0]][clothesIndex[1]] == 0 :  #0이면 상의, 1이면 하의
-                #         top = clothesIndex
-                #     elif kindOfClothes[clothesIndex[0]][clothesIndex[1]] == 1 :
-                #         pants = clothesIndex
-                #
-                #     # 입히기
-                #     if len(pants) != 0 :
-                #         realframe = pants_overlayer.overlay(realframe, box_coordinate, p1, pants)
-                #
-                #
-                #     if len(top) != 0 :
-                #         realframe = right_overlayer.overlay(realframe, box_coordinate, p1,top)  # 프레임, 얼굴좌표, (왼좌표. 오른좌표)
-                #         realframe = clothes_overlayer.overlay(realframe, box_coordinate, top)
-
-
-                if(st.all() == 0) & (countframe == 0):
-                    break
-
-                #### overlay part end ####
-
-                #Background UI 삽입
-                backgroundUI.setImage(realframe, 0, 0)
-
-                if (st.all() == 1): # st == 1 이면 프레임 안
-                    realframe = cv2.add(realframe, mask)
-
-
-                #img = cv2.resize(img, (360, 640))  # Resize image
-                cv2.imshow('frame', realframe)
 
                 # 카메라 종료
                 k = cv2.waitKey(30) & 0xff
@@ -267,8 +220,24 @@ def main():
                     cap.release()
                     break
 
+
+                #Background UI 삽입
+                #backgroundUI.setImage(realframe, 0, 0)
+
+                if (st.all() == 1): # st == 1 이면 프레임 안
+                    img = cv2.add(realframe, mask)
+                else: # 프레임 밖으로 벗어난 경우
+                    img = realframe
+                    break
+
+                #img = cv2.resize(img, (360, 640))  # Resize image
+                cv2.imshow('frame', img)
+
+
                 # Detections
 
+    cap.release()
+    cv2.destroyAllWindows()
 
 
 
